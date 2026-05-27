@@ -4,16 +4,31 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: paddleocr-ui:latest
+    image: paddleocr-ui:v0.1
     container_name: paddleocr-ui
     ports:
       - "8000:8000"
     environment:
-      - PYTHONUNBUFFERED=1
-      - PADDLEOCR_SECRET=change-me-in-production
+      # ── 管理员账户（首次启动自动创建）──
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin123}
+      # ── JWT 密钥（生产环境务必修改）──
+      - PADDLEOCR_SECRET=${PADDLEOCR_SECRET:-paddleocr-prod-secret}
+      # ── PaddleOCR / MinerU 配置 ──
       - PADDLE_PDX_MODEL_SOURCE=modelscope
       - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+      - PYTHONUNBUFFERED=1
     volumes:
-      - ./app/uploads:/app/app/uploads
-      - ./app/data:/app/app/data
+      # SQLite 数据库持久化（用户、任务记录）
+      - ./data/db:/app/app/data
+      # 上传文件持久化
+      - ./data/uploads:/app/app/uploads
+      # OCR 输出结果持久化（生成的 docx/xlsx/zip）
+      - ./data/outputs:/app/app/data/outputs
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
