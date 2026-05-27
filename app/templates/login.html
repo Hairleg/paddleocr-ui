@@ -1,0 +1,92 @@
+<!-- Author:sizhchan Org:dgaudit Version:v0.1 Date:2026-05-27 -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 - PaddleOCR UI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f0f2f5;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card {
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+        h1 { text-align: center; margin-bottom: 8px; font-size: 22px; }
+        .sub { text-align: center; color: #999; margin-bottom: 28px; font-size: 13px; }
+        label { display: block; margin-bottom: 4px; font-size: 13px; color: #555; }
+        input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        input:focus { outline: none; border-color: #4a90d9; }
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #4a90d9;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+        }
+        button:hover { background: #3a7bc8; }
+        .err { color: #e53e3e; font-size: 13px; margin-bottom: 12px; text-align: center; }
+        .link { text-align: center; margin-top: 16px; font-size: 13px; color: #888; }
+        .link a { color: #4a90d9; text-decoration: none; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h1>PaddleOCR UI</h1>
+    <p class="sub">登录你的账号</p>
+    <div class="err" id="error"></div>
+    <label for="username">用户名</label>
+    <input id="username" type="text" placeholder="输入用户名" autocomplete="username">
+    <label for="password">密码</label>
+    <input id="password" type="password" placeholder="输入密码" autocomplete="current-password">
+    <button id="submitBtn">登 录</button>
+    <p class="link">还没有账号？<a href="/register">立即注册</a></p>
+</div>
+<script>
+const el = (id) => document.getElementById(id);
+el('submitBtn').addEventListener('click', async () => {
+    const username = el('username').value.trim();
+    const password = el('password').value;
+    if (!username || !password) { el('error').textContent = '请填写用户名和密码'; return; }
+    el('error').textContent = '';
+    try {
+        const resp = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password }),
+        });
+        const data = await resp.json();
+        if (resp.ok) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            window.location.href = '/';
+        } else {
+            el('error').textContent = data.error || '登录失败';
+        }
+    } catch(e) { el('error').textContent = '网络错误'; }
+});
+el('password').addEventListener('keydown', (e) => { if (e.key === 'Enter') el('submitBtn').click(); });
+</script>
+</body>
+</html>

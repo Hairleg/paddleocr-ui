@@ -1,0 +1,484 @@
+<!--
+Author: sizhchan
+Org: dgaudit
+Version: v0.1
+Date: 2026-05-27
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件OCR识别工具</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f0f2f5;color:#333;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px}
+.header{width:100%;max-width:900px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.header h1{font-size:20px}
+.header .user-info{display:flex;align-items:center;gap:12px}
+.header .user-info span{font-size:14px;color:#555}
+.header button{padding:6px 16px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;font-size:13px}
+.header button:hover{background:#f5f5f5}
+.tabs{width:100%;max-width:900px;display:flex;gap:0;margin-bottom:20px;border-bottom:2px solid #e8e8e8}
+.tab-btn{padding:10px 24px;border:none;background:none;cursor:pointer;font-size:14px;color:#888;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab-btn:hover{color:#4a90d9}
+.tab-btn.active{color:#4a90d9;border-bottom-color:#4a90d9;font-weight:500}
+.card{background:#fff;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,.06);padding:28px;width:100%;max-width:900px;margin-bottom:20px}
+.card h2{font-size:16px;margin-bottom:16px}
+.drop-zone{border:2px dashed #d9d9d9;border-radius:8px;padding:36px;text-align:center;transition:all .2s;cursor:pointer}
+.drop-zone:hover,.drop-zone.dragover{border-color:#4a90d9;background:#f5f9ff}
+.drop-zone p{color:#999;font-size:14px}
+#uploadStatus{margin-top:10px;font-size:13px;text-align:center}
+.precheck-section{margin-top:16px}
+.precheck-section h3{font-size:14px;margin-bottom:8px}
+.precheck-list{list-style:none;font-size:13px}
+.precheck-list li{padding:4px 0;border-bottom:1px solid #f5f5f5}
+.precheck-ok{color:#389e0d}
+.precheck-bad{color:#cf1322}
+.precheck-buttons{margin-top:16px;display:flex;gap:8px}
+.btn{padding:8px 20px;border:none;border-radius:6px;cursor:pointer;font-size:14px}
+.btn-primary{background:#4a90d9;color:#fff}
+.btn-primary:hover{background:#3a7bc8}
+.btn-danger{background:#ff4d4f;color:#fff}
+.btn-success{background:#52c41a;color:#fff}
+.progress-info{margin-top:16px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #f0f0f0}
+th{color:#888;font-weight:500;font-size:12px}
+.status-tag{display:inline-block;padding:2px 10px;border-radius:10px;font-size:12px;font-weight:500}
+.status-precheck{background:#f0f0f0;color:#888}
+.status-queued{background:#fff7e6;color:#d48806}
+.status-processing{background:#e6f7ff;color:#1890ff}
+.status-completed{background:#f6ffed;color:#389e0d}
+.status-failed{background:#fff2f0;color:#cf1322}
+a{color:#4a90d9;text-decoration:none}
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.4);z-index:100;justify-content:center;align-items:center}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:12px;padding:28px;max-width:440px;width:90%}
+.modal h3{margin-bottom:16px}
+.modal input{width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;margin-bottom:12px}
+.modal .modal-buttons{display:flex;gap:8px;justify-content:flex-end}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>文件OCR识别工具</h1>
+  <div class="user-info">
+    <span id="usernameDisplay"></span>
+    <button onclick="showChangePassword()">改密</button>
+    <button onclick="logout()">退出</button>
+  </div>
+</div>
+
+<div class="tabs" id="tabs">
+  <button class="tab-btn active" data-tab="ocr">上传识别</button>
+  <button class="tab-btn" data-tab="history">历史记录</button>
+  <button class="tab-btn hidden" data-tab="admin" id="adminTab">用户管理</button>
+  <button class="tab-btn" data-tab="help">使用说明</button>
+</div>
+
+<!-- OCR Tab -->
+<div class="card" id="tab-ocr">
+  <h2>上传文件</h2>
+  <!-- Settings Panel -->
+  <details style="margin-bottom:16px;border:1px solid #d9d9d9;border-radius:8px;padding:10px 14px;background:#fafafa">
+    <summary style="cursor:pointer;font-weight:600;user-select:none;font-size:14px">⚙ 识别参数设置（展开调整）</summary>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin-top:10px" id="settingsGrid">
+      <div><label style="font-size:12px;color:#666">DPI (渲染精度)</label><br><span style="font-size:11px;color:#999">150(快)/250(推荐)/400(精)</span></div>
+      <div><select id="setDPI" style="width:100%;padding:4px"><option value="150">150 - 快速</option><option value="250" selected>250 - 标准（推荐）</option><option value="400">400 - 高精度</option></select></div>
+      <div><label style="font-size:12px;color:#666">OCR 语言</label><br><span style="font-size:11px;color:#999">ch=中文 / en=英文</span></div>
+      <div><select id="setLang" style="width:100%;padding:4px"><option value="ch" selected>ch - 中文</option><option value="en">en - 英文</option></select></div>
+      <div><label style="font-size:12px;color:#666">表格检测</label><br><span style="font-size:11px;color:#999">开启=提取表结构到Excel</span></div>
+      <div><select id="setTable" style="width:100%;padding:4px"><option value="1" selected>开启</option><option value="0">关闭</option></select></div>
+      <div><label style="font-size:12px;color:#666">表格检测策略（电子PDF）</label><br><span style="font-size:11px;color:#999">auto=智能 / lines=线条优先 / text=文字网格</span></div>
+      <div><select id="setTableStrategy" style="width:100%;padding:4px"><option value="lines" selected>lines - 线条优先（推荐）</option><option value="auto">auto - 智能</option><option value="lines">lines - 线条优先</option><option value="text">text - 文字网格</option></select></div>
+      <div><label style="font-size:12px;color:#666">相邻表格合并</label><br><span style="font-size:11px;color:#999">开启=同列数相邻表尝试合并</span></div>
+      <div><select id="setTableMerge" style="width:100%;padding:4px"><option value="0" selected>关闭（推荐）</option><option value="1">开启</option></select></div>
+      <div><label style="font-size:12px;color:#666">印章检测</label><br><span style="font-size:11px;color:#999">开启=裁剪印章区域保存</span></div>
+      <div><select id="setStamp" style="width:100%;padding:4px"><option value="1" selected>开启</option><option value="0">关闭</option></select></div>
+      <div><label style="font-size:12px;color:#666">识别图片</label><br><span style="font-size:11px;color:#999">0=仅文字 / 1=含图片 / 过高可能误判文字为图片</span></div>
+      <div><select id="setImage" style="width:100%;padding:4px"><option value="0" selected>0 - 仅文字</option><option value="1">1 - 适量图片</option><option value="2">2 - 含大量图片</option></select></div>
+      <div><label style="font-size:12px;color:#666">单独导出图片</label><br><span style="font-size:11px;color:#cf1322">⚠ 开启=逐页分析并导出图片区域（耗时增加约 30%）</span></div>
+      <div><select id="setExtractImages" style="width:100%;padding:4px"><option value="0" selected>关闭（推荐）</option><option value="1">开启</option></select></div>
+    </div>
+    <button class="btn" onclick="resetSettings()" style="margin-top:10px;font-size:11px;padding:4px 12px">恢复默认参数</button>
+  </details>
+  <div class="drop-zone" id="dropZone">
+    <p>点击或拖拽文件到此处上传 (PDF / ZIP / 图片)</p>
+    <input type="file" id="fileInput" accept=".pdf,.zip,.jpg,.jpeg,.png" hidden>
+  </div>
+  <div id="uploadStatus"></div>
+  <div id="precheckArea" class="hidden"></div>
+  <div id="progressArea" class="hidden"></div>
+</div>
+
+<!-- History Tab -->
+<div class="card hidden" id="tab-history">
+  <h2>任务列表 <button class="btn btn-danger" onclick="deleteAllJobs()" style="float:right;font-size:12px;padding:4px 12px">清空全部</button></h2>
+  <div id="jobList"><p style="color:#bbb;text-align:center;padding:40px">暂无任务</p></div>
+</div>
+
+<!-- Help Tab -->
+<div class="card hidden" id="tab-help" style="font-size:14px;line-height:1.8;color:#444">
+  <h2>使用说明</h2>
+
+  <h3 style="margin-top:20px;color:#333">一、系统组成</h3>
+  <p>本工具基于 <b>PaddleOCR 3.5</b>（百度飞桨）识别引擎 + <b>PyMuPDF</b>（PDF 解析）构建。整体分为三部分：</p>
+  <table style="margin:8px 0;width:100%">
+    <tr><th style="text-align:left;width:100px">模块</th><th style="text-align:left">功能</th></tr>
+    <tr><td>上传 &amp; 预检</td><td>接收 PDF/图片上传，检测文件类型、页数、是否可处理</td></tr>
+    <tr><td>识别管线</td><td>PDF 分析 → 页面分类 → 文字提取/OCR → 表格检测 → 图片识别 → 印章检测 → 排版输出</td></tr>
+    <tr><td>结果导出</td><td>生成 Word（.docx）正文 + 嵌入表格、Excel（.xlsx）多 Sheet 表格、ZIP 归档下载</td></tr>
+  </table>
+
+  <h3 style="margin-top:20px;color:#333">二、识别逻辑</h3>
+
+  <h4 style="margin-top:12px">1. 电子 PDF（有文字层）</h4>
+  <p style="background:#f6ffed;padding:8px;border-radius:4px;border-left:3px solid #52c41a">
+    直接从 PDF 文本层提取 <b>文字 + 字体 + 字号 + 颜色</b>，保留原始格式。<br>
+    <b>表格</b>：用 PyMuPDF 内置的线条/文字间隙检测自动发现。<br>
+    <b>速度</b>：每秒 20-50 页，无 GPU 需求。
+  </p>
+
+  <h4 style="margin-top:12px">2. 扫描件/图片（无文字层）</h4>
+  <p style="background:#e6f7ff;padding:8px;border-radius:4px;border-left:3px solid #1890ff">
+    先渲染为 250 DPI 图像 → <b>PaddleOCR</b> 逐行识别文字 → <b>图像线检测</b> 找表格边框 → <b>逐网格 OCR</b> 填单元格。<br>
+    <b>表格</b>：通过横向/纵向投影找到网格线位置，重建行列结构。<br>
+    <b>速度</b>：纯 CPU 首次约 5-10 分钟（ONEDNN 编译），后续每页 10-30 秒。
+  </p>
+
+  <h4 style="margin-top:12px">3. 印章识别</h4>
+  <p style="background:#fff7e6;padding:8px;border-radius:4px;border-left:3px solid #faad14">
+    基于 HSV 颜色空间（红/蓝印章）+ 椭圆拟合 + 纹理密度检测。仅对彩色扫描件有效，灰度件自动跳过。<br>
+    检出的印章独立裁剪为 PNG 嵌入 Word 文档。
+  </p>
+
+  <h3 style="margin-top:20px;color:#333">三、参数说明</h3>
+
+  <table style="margin:8px 0;width:100%">
+    <tr><th style="text-align:left;min-width:120px">参数</th><th style="text-align:left;min-width:80px">默认值</th><th style="text-align:left">说明与例子</th></tr>
+    <tr>
+      <td><b>DPI</b></td><td>250</td>
+      <td>扫描件渲染精度。数值越高图像越清晰、表格线检测越准，但处理更慢。<br>
+      <i>例：150=快速预览 / 250=标准文档（推荐） / 400=精细表格公式</i></td>
+    </tr>
+    <tr>
+      <td><b>OCR 语言</b></td><td>ch</td>
+      <td>仅对扫描件生效。ch=中文简体 / en=英文。<br>
+      <i>例：中英文混合合同选 ch；全英文合同选 en 可提速</i></td>
+    </tr>
+    <tr>
+      <td><b>表格检测</b></td><td>开启</td>
+      <td>是否提取表格。关闭后仅输出纯文字段落，不生成 Excel 表格 Sheet。<br>
+      <i>例：纯公文无表格可关闭以提速</i></td>
+    </tr>
+    <tr>
+      <td><b>表格检测策略</b></td><td>auto</td>
+      <td>仅对电子 PDF 生效。控制如何发现表格：<br>
+      <b>lines</b> = 靠 PDF 中的矢量框线找（适合招标文件、有边框表格）<br>
+      <b>text</b> = 靠文字之间的空白网格找（适合无线条的对齐文字表格）<br>
+      <b>auto</b> = 两者结合（默认）<br>
+      <i>例：政府招标文件选 lines；Word 另存的无框表格选 text</i></td>
+    </tr>
+    <tr>
+      <td><b>相邻表格合并</b></td><td>关闭</td>
+      <td>仅对电子 PDF 生效。开启后，连续两页上列数相同的表格会拼接成一张。<br>
+      <i>例：大表格跨多页时选开启；独立小表格在独立页面选关闭（推荐）</i></td>
+    </tr>
+    <tr>
+      <td><b>印章检测</b></td><td>开启</td>
+      <td>是否检测公章/印章。扫描件为灰色时可能无效果。<br>
+      <i>例：彩色扫描合同选开启；黑白复印件可关闭</i></td>
+    </tr>
+    <tr>
+      <td><b>识别图片</b></td><td>0</td>
+      <td>控制图片/图表区域的检测强度。仅对扫描件/图片生效。<br>
+      0=仅识别文字，忽略图片区域（推荐，速度最快）<br>
+      1=适量图片识别，适合图文混合文档<br>
+      2=深度图片识别，适合图片密集型文档<br>
+      <b style="color:#cf1322">⚠ 过高可能导致文字被误识别为图片，丢失正文内容</b><br>
+      <i>例：纯合同文本选 0；产品手册含截图选 1；海报宣传册选 2</i></td>
+    </tr>
+    <tr>
+      <td><b>单独导出图片</b></td><td>关闭</td>
+      <td>是否将 PDF/扫描件中的图片区域单独裁剪导出为 PNG 文件。<br>
+      开启后会在 ZIP 包的 images/photos/ 目录下生成逐页裁剪的图片。<br>
+      <b style="color:#cf1322">⚠ 会逐页分析像素纹理密度，每页增加约 2-5 秒处理时间</b><br>
+      <i>例：纯公文无图片选关闭；合同含公章/扫描件选开启以存档</i></td>
+    </tr>
+  </table>
+
+  <h3 style="margin-top:20px;color:#333">四、注意事项</h3>
+
+  <ul style="padding-left:20px">
+    <li style="margin-bottom:8px"><b>文件大小</b>：建议单个 PDF 不超过 200 MB。超大文件处理时间较长。</li>
+    <li style="margin-bottom:8px"><b>扫描件首次慢</b>：第一次处理扫描件时，系统需编译 ONEDNN 推理内核（约 5-10 分钟），后续会快很多。</li>
+    <li style="margin-bottom:8px"><b>表格精度</b>：电子 PDF 的表格依赖原文件中的线条或文字排版。Word 另存为 PDF 时建议勾选"保留可编辑文字"，避免文字被矢量化。</li>
+    <li style="margin-bottom:8px"><b>印章遮盖</b>：盖在公章下的文字无法被 OCR 识别（物理遮挡），这是所有 OCR 的固有局限。</li>
+    <li style="margin-bottom:8px"><b>手写体</b>：签名、手写日期等识别精度低于印刷体，属正常现象。</li>
+    <li style="margin-bottom:8px"><b>输出格式</b>：生成 .docx + .xlsx + .zip（文件名为 原文件名_时间戳.zip），不支持输出原 PDF 格式。</li>
+    <li style="margin-bottom:8px"><b>加密 PDF</b>：暂不支持有密码保护的 PDF 文件。</li>
+    <li style="margin-bottom:8px"><b>多文件对比</b>：当前版本每次仅处理一个 PDF。如需批量对比表格数据，可下载 Excel 后人工对比。</li>
+  </ul>
+</div>
+
+<!-- Admin Tab -->
+<div class="card hidden" id="tab-admin">
+  <h2>用户管理</h2>
+  <div id="userList"><p style="color:#bbb;text-align:center;padding:40px">加载中...</p></div>
+</div>
+
+<!-- Change Password Modal -->
+<div class="modal-overlay" id="pwdModal">
+  <div class="modal">
+    <h3>修改密码</h3>
+    <input id="oldPwd" type="password" placeholder="原密码">
+    <input id="newPwd" type="password" placeholder="新密码 (至少4位)">
+    <input id="confirmPwd" type="password" placeholder="确认新密码">
+    <div class="modal-buttons">
+      <button class="btn" onclick="closePwdModal()">取消</button>
+      <button class="btn btn-primary" onclick="changePassword()">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reset Password Modal -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal">
+    <h3 id="resetTitle">重置密码</h3>
+    <input id="resetPwd" type="password" placeholder="新密码">
+    <input id="resetConfirm" type="password" placeholder="确认新密码">
+    <div class="modal-buttons">
+      <button class="btn" onclick="closeResetModal()">取消</button>
+      <button class="btn btn-primary" onclick="doResetPassword()">确认</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const token=localStorage.getItem('token');
+const user=JSON.parse(localStorage.getItem('user')||'{}');
+if(!token){window.location.href='/login';}
+
+document.getElementById('usernameDisplay').textContent=user.username||'';
+if(user.is_admin)document.getElementById('adminTab').classList.remove('hidden');
+
+function logout(){localStorage.removeItem('token');localStorage.removeItem('user');window.location.href='/login';}
+
+// ── Tab switching ──
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('#tab-ocr,#tab-history,#tab-admin,#tab-help').forEach(c=>c.classList.add('hidden'));
+    document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
+    if(btn.dataset.tab==='history')loadJobs();
+    if(btn.dataset.tab==='admin')loadUsers();
+  });
+});
+
+// ── Upload ──
+const dropZone=document.getElementById('dropZone');
+const fileInput=document.getElementById('fileInput');
+dropZone.addEventListener('click',()=>fileInput.click());
+dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover')});
+dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');uploadFile(e.dataTransfer.files[0])});
+fileInput.addEventListener('change',()=>{if(fileInput.files[0])uploadFile(fileInput.files[0])});
+
+function getSettings(){
+  return {
+    dpi: parseInt(document.getElementById('setDPI').value)||250,
+    lang: document.getElementById('setLang').value||'ch',
+    table: parseInt(document.getElementById('setTable').value)||1,
+    table_strategy: document.getElementById('setTableStrategy').value||'auto',
+    table_merge: parseInt(document.getElementById('setTableMerge').value)||0,
+    stamp: parseInt(document.getElementById('setStamp').value)||1,
+    image: parseInt(document.getElementById('setImage').value)||0,
+    extract_images: parseInt(document.getElementById('setExtractImages').value)||0
+  };
+}
+function resetSettings(){
+  document.getElementById('setDPI').value='250';
+  document.getElementById('setLang').value='ch';
+  document.getElementById('setTable').value='1';
+  document.getElementById('setTableStrategy').value='lines';
+  document.getElementById('setTableMerge').value='0';
+  document.getElementById('setStamp').value='1';
+  document.getElementById('setImage').value='0';
+  document.getElementById('setExtractImages').value='0';
+}
+
+async function uploadFile(file){
+  document.getElementById('uploadStatus').textContent='上传中...';
+  document.getElementById('uploadStatus').style.color='#888';
+  document.getElementById('precheckArea').classList.add('hidden');
+  document.getElementById('progressArea').classList.add('hidden');
+  const settings=getSettings();
+  const fd=new FormData();fd.append('file',file);
+  fd.append('settings',JSON.stringify(settings));
+  const resp=await fetch('/api/jobs/precheck',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
+  const data=await resp.json();
+  if(!resp.ok){document.getElementById('uploadStatus').textContent=data.error||'上传失败';document.getElementById('uploadStatus').style.color='#cf1322';return;}
+  document.getElementById('uploadStatus').textContent='预检完成';
+  document.getElementById('uploadStatus').style.color='#389e0d';
+  showPrecheck(data);
+}
+
+function showPrecheck(data){
+  const area=document.getElementById('precheckArea');
+  area.classList.remove('hidden');
+  let h='<h3>预检报告</h3><ul class="precheck-list">';
+  data.precheck.ok_files.forEach(f=>{h+=`<li class="precheck-ok">可处理: ${f.path}</li>`});
+  data.precheck.bad_files.forEach(f=>{h+=`<li class="precheck-bad">不可处理: ${f.path} (${f.reason||'未知'})</li>`});
+  h+=`</ul><p style="font-size:13px;margin-top:8px">共 ${data.precheck.total_ok} 个可处理，${data.precheck.total_bad} 个跳过</p>`;
+  if(data.precheck.can_proceed){
+    h+=`<div class="precheck-buttons"><button class="btn btn-primary" onclick="confirmJob('${data.job_id}')">确认处理</button><button class="btn" onclick="cancelPrecheck()">取消</button></div>`;
+  }else{
+    h+='<p style="color:#cf1322">没有可处理的文件</p><button class="btn" onclick="cancelPrecheck()">返回</button>';
+  }
+  area.innerHTML=h;
+}
+
+function cancelPrecheck(){
+  document.getElementById('precheckArea').classList.add('hidden');
+  document.getElementById('uploadStatus').textContent='';
+}
+
+async function confirmJob(jobId){
+  document.getElementById('precheckArea').classList.add('hidden');
+  document.getElementById('uploadStatus').textContent='已提交，等待处理...';
+  const resp=await fetch(`/api/jobs/${jobId}/confirm`,{method:'POST',headers:{'Authorization':'Bearer '+token}});
+  const data=await resp.json();
+  if(resp.ok){
+    document.getElementById('uploadStatus').textContent='已加入队列';
+    showProgress(jobId);
+  }
+}
+
+function showProgress(jobId){
+  const area=document.getElementById('progressArea');
+  area.classList.remove('hidden');
+  area.innerHTML='<div class="progress-info">处理中...</div>';
+  const iv=setInterval(async()=>{
+    const resp=await fetch(`/api/jobs/${jobId}`,{headers:{'Authorization':'Bearer '+token}});
+    const data=await resp.json();
+    const j=data.job;
+    let s=`状态: ${j.status}`;
+    if(j.file_count)s+=` | 文件: ${j.completed_files}/${j.file_count}`;
+    area.innerHTML=`<div class="progress-info">${s}</div>`;
+    if(j.status==='completed'){area.innerHTML+=`<p><a href="/api/jobs/${jobId}/download?token=${token}">下载结果</a></p>`;clearInterval(iv);}
+    if(j.status==='failed'){area.innerHTML+=`<p style="color:#cf1322">失败: ${j.error_message||'未知'}</p>`;clearInterval(iv);}
+  },3000);
+}
+
+// ── History ──
+async function loadJobs(){
+  const resp=await fetch('/api/jobs',{headers:{'Authorization':'Bearer '+token}});
+  const data=await resp.json();
+  const list=document.getElementById('jobList');
+  if(!data.jobs.length){list.innerHTML='<p style="color:#bbb;text-align:center;padding:40px">暂无任务</p>';return;}
+  let h='<table><tr><th>文件名</th><th>状态</th><th>进度</th><th>时间</th><th>操作</th></tr>';
+  data.jobs.forEach(j=>{
+    const statusClass='status-'+j.status;
+    const statusName={'precheck':'待确认','queued':'排队中','processing':'处理中','completed':'已完成','failed':'失败'}[j.status]||j.status;
+    const time=new Date(j.created_at+'Z').toLocaleString('zh-CN');
+    const progress=j.file_count?`${j.completed_files||0}/${j.file_count}`:'-';
+    const dl=j.status==='completed'?`<a href="/api/jobs/${j.id}/download?token=${token}">下载</a>`:'';
+    const del=`<a href="#" onclick="deleteJob('${j.id}')" style="color:#cf1322;margin-left:8px">删除</a>`;
+    const detail=j.status==='failed'?`<a href="#" onclick="showJobDetail('${j.id}')">详情</a>`:'';
+    h+=`<tr><td>${esc(j.source_filename)}</td><td><span class="status-tag ${statusClass}">${statusName}</span></td><td>${progress}</td><td>${time}</td><td>${dl}${detail}${del}</td></tr>`;
+  });
+  h+='</table>';
+  list.innerHTML=h;
+}
+
+async function showJobDetail(jobId){
+  const resp=await fetch(`/api/jobs/${jobId}`,{headers:{'Authorization':'Bearer '+token}});
+  const data=await resp.json();
+  alert('错误: '+(data.job.error_message||'未知'));
+}
+
+// ── Admin ──
+async function loadUsers(){
+  const resp=await fetch('/api/admin/users',{headers:{'Authorization':'Bearer '+token}});
+  const data=await resp.json();
+  const list=document.getElementById('userList');
+  let h='<table><tr><th>用户名</th><th>角色</th><th>注册时间</th><th>操作</th></tr>';
+  data.users.forEach(u=>{
+    const time=new Date(u.created_at+'Z').toLocaleString('zh-CN');
+    const role=u.is_admin?'管理员':'用户';
+    const actions=u.is_admin?'-':`<a href="#" onclick="resetUserPwd(${u.id},'${esc(u.username)}')">重置密码</a> <a href="#" style="color:#cf1322" onclick="deleteUser(${u.id},'${esc(u.username)}')">删除</a>`;
+    h+=`<tr><td>${esc(u.username)}</td><td>${role}</td><td>${time}</td><td>${actions}</td></tr>`;
+  });
+  h+='</table>';
+  list.innerHTML=h;
+}
+
+let resetUserId=null;
+function resetUserPwd(id,name){
+  resetUserId=id;
+  document.getElementById('resetTitle').textContent='重置 '+name+' 的密码';
+  document.getElementById('resetPwd').value='';
+  document.getElementById('resetConfirm').value='';
+  document.getElementById('resetModal').classList.add('open');
+}
+function closeResetModal(){resetUserId=null;document.getElementById('resetModal').classList.remove('open')}
+async function doResetPassword(){
+  const p1=document.getElementById('resetPwd').value;
+  const p2=document.getElementById('resetConfirm').value;
+  if(p1!==p2){alert('两次密码不一致');return;}
+  if(p1.length<4){alert('密码至少4位');return;}
+  await fetch(`/api/admin/users/${resetUserId}/reset-password`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({new_password:p1})});
+  closeResetModal();
+  alert('密码已重置');
+}
+async function deleteUser(id,name){
+  if(!confirm(`确定删除用户 "${name}" 吗？此操作不可撤销。`))return;
+  await fetch(`/api/admin/users/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+  loadUsers();
+}
+
+// ── Change Password ──
+function showChangePassword(){
+  document.getElementById('oldPwd').value='';
+  document.getElementById('newPwd').value='';
+  document.getElementById('confirmPwd').value='';
+  document.getElementById('pwdModal').classList.add('open');
+}
+function closePwdModal(){document.getElementById('pwdModal').classList.remove('open')}
+async function changePassword(){
+  const op=document.getElementById('oldPwd').value;
+  const np=document.getElementById('newPwd').value;
+  const cp=document.getElementById('confirmPwd').value;
+  if(np!==cp){alert('两次密码不一致');return;}
+  if(np.length<4){alert('新密码至少4位');return;}
+  const resp=await fetch('/api/auth/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({old_password:op,new_password:np})});
+  if(resp.ok){closePwdModal();alert('密码已修改');}
+  else{const d=await resp.json();alert(d.error||'修改失败');}
+}
+document.getElementById('pwdModal').addEventListener('click',function(e){if(e.target===this)closePwdModal()});
+document.getElementById('resetModal').addEventListener('click',function(e){if(e.target===this)closeResetModal()});
+
+function esc(s){if(!s)return'';return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+async function deleteJob(jobId){
+  if(!confirm('确定删除此任务吗？将同时删除上传文件和生成产物。'))return;
+  await fetch(`/api/jobs/${jobId}`,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+  loadJobs();
+}
+
+async function deleteAllJobs(){
+  if(!confirm('确定删除全部历史记录吗？所有上传文件和生成产物将被清除。此操作不可撤销。'))return;
+  const resp=await fetch('/api/jobs',{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
+  const data=await resp.json();
+  alert(`已删除 ${data.deleted||0} 条记录`);
+  loadJobs();
+}
+
+// Auto-refresh history every 10s
+setInterval(()=>{if(document.getElementById('tab-history')&&!document.getElementById('tab-history').classList.contains('hidden'))loadJobs()},10000);
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+# Author: sizhchan | Org: dgaudit | Version: v0.1 | Date: 2026-05-27
+services:
+  paddleocr-ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: paddleocr-ui:latest
+    container_name: paddleocr-ui
+    ports:
+      - "8000:8000"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PADDLEOCR_SECRET=change-me-in-production
+      - PADDLE_PDX_MODEL_SOURCE=modelscope
+      - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+    volumes:
+      - ./app/uploads:/app/app/uploads
+      - ./app/data:/app/app/data
+    restart: unless-stopped
