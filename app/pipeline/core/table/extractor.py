@@ -31,9 +31,9 @@ MIN_LINE_LENGTH = 50        # Min line length in pixels
 MAX_LINE_GAP = 10           # Max gap between segments to be merged
 
 # ── Table region filtering ──
-MIN_TABLE_WIDTH = 100       # Min table width in pixels
-MIN_TABLE_HEIGHT = 60       # Min table height in pixels
-MIN_LINE_COUNT = 3          # Min total (horizontal + vertical) lines for a table
+MIN_TABLE_WIDTH = 150       # Min table width in pixels
+MIN_TABLE_HEIGHT = 100       # Min table height in pixels
+MIN_LINE_COUNT = 8          # Min total (horizontal + vertical) lines for a table
 
 
 def detect_table_regions(
@@ -95,7 +95,14 @@ def detect_table_regions(
         # If enough line pixels, it's likely a table
         if (h_count + v_count) < MIN_LINE_COUNT * 100:
             continue
+        # Both horizontal and vertical lines must be present
+        if h_count < 200 or v_count < 100:
+            continue
 
+        # Skip regions covering >80% page width (layout boxes, not tables)
+        page_w = image.shape[1]
+        if w > page_w * 0.8:
+            continue
         regions.append((x, y, w, h))
 
     # Sort top-to-bottom

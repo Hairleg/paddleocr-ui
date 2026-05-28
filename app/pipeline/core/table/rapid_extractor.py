@@ -117,7 +117,7 @@ def _parse_table_html(html: str) -> list[list[str]]:
     return parser.rows
 
 
-def is_valid_table(rows: list[list[str]], min_rows: int = 2, min_cols: int = 2,
+def is_valid_table(rows: list[list[str]], min_rows: int = 3, min_cols: int = 2,
                    min_fill_ratio: float = 0.15) -> bool:
     """Filter out false table detections (text fragments misidentified as tables).
 

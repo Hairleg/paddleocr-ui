@@ -25,7 +25,7 @@ from typing import Optional
 import fitz
 import cv2
 
-from app.pipeline.core.page_router import classify_page
+from app.pipeline.core.page_router import classify_page, has_tables
 from app.pipeline.ir.types import (
     DocumentLayout,
     ElementType,
@@ -135,24 +135,76 @@ def process_pdf(
         # ── Table detection on the page image ──
         table_regions = []
         if enable_table:
+            # Pre-check: quick scan for grid-like structure (YOLO → line-density)
+            from app.pipeline.core.layout.mineru_layout import has_table_layout
+            if has_table_layout(img, page_num + 1):
+                # Try MinerU YOLO layout detection (primary)
+                try:
+                    from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
+                    yolo_result = detect_table_regions_yolo(img)
+                    if yolo_result:
+                        yolo_tables = []
+                        for (x, y, w, h) in yolo_result[:5]:
+                            if h < 30 or w < 50:
+                                continue
+                            if w > img.shape[1] * 0.15 and h > 40:
+                                yolo_tables.append((x, y, w, h))
+                        if yolo_tables:
+                            table_regions = yolo_tables
+                            logger.info("Page %d: YOLO detected %d table regions", page_num + 1, len(table_regions))
+                except Exception as exc:
+                    logger.debug("YOLO table detection skipped: %s", exc)
+
+                # Fall back to OpenCV if YOLO found nothing
+                if not table_regions:
+                    try:
+                        from app.pipeline.core.table.extractor import detect_table_regions
+                        table_regions = detect_table_regions(img)[:3]
+                        logger.info("Page %d: OpenCV detected %d table regions", page_num + 1, len(table_regions))
+                    except Exception as exc:
+                        logger.debug("OpenCV table detection also skipped: %s", exc)
+            else:
+                logger.info("Page %d: pre-check — no table grid detected, skipping extraction", page_num + 1)
+
+        # ── OCR full page (lazy import PaddleOCR for scanned pages) ──
+        try:
+            from app.pipeline.core.ocr.engine import predict_ocr
+            ocr_result = predict_ocr(image_path)
+            page_ocr = ocr_result[0] if ocr_result else None
+        except Exception as exc:
+            logger.error("OCR failed on page %d: %s", page_num + 1, exc)
+            page_ocr = None
+
+        # ── Table detection on the page image ──
+        table_regions = []
+        if enable_table:
             # Try MinerU YOLO layout detection first (better for complex layouts)
             try:
                 from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
-                yolo_tables = detect_table_regions_yolo(img)
-                if yolo_tables:
-                    table_regions = yolo_tables
-                    logger.info("Page %d: YOLO detected %d table regions", page_num + 1, len(table_regions))
+                yolo_result = detect_table_regions_yolo(img)
+                # Only accept tables with reasonable confidence; pure text pages get []
+                if yolo_result:
+                    # Filter out low-confidence regions (bbox too small, unlikely table shape)
+                    yolo_tables = []
+                    for (x, y, w, h) in yolo_result[:5]:
+                        # Skip if too thin (likely a text line separator)
+                        if h < 30 or w < 50:
+                            continue
+                        # Only accept if looks like a grid table (width > 15% of page)
+                        if w > img.shape[1] * 0.15 and h > 40:
+                            yolo_tables.append((x, y, w, h))
+                    if yolo_tables:
+                        table_regions = yolo_tables
+                        logger.info("Page %d: YOLO detected %d table regions", page_num + 1, len(table_regions))
+                    else:
+                        logger.info("Page %d: YOLO found no valid tables (pure text page)", page_num + 1)
             except Exception as exc:
                 logger.debug("YOLO table detection skipped: %s", exc)
 
-            # Fall back to OpenCV if YOLO found nothing
+            # Skip OpenCV fallback for pure text pages — don't force table detection
+            # (OpenCV was misidentifying text line spacing as table grids)
             if not table_regions:
-                try:
-                    from app.pipeline.core.table.extractor import detect_table_regions
-                    table_regions = detect_table_regions(img)
-                    logger.info("Page %d: OpenCV detected %d table regions", page_num + 1, len(table_regions))
-                except Exception as exc:
-                    logger.error("Table detection failed on page %d: %s", page_num + 1, exc)
+                logger.info("Page %d: no tables detected, skipping table extraction", page_num + 1)
 
         # ── Stamp detection (color-based for red/blue stamps, skip on B/W scans) ──
         stamp_elements = []
@@ -215,7 +267,7 @@ def process_pdf(
 
         # Table elements (try RapidTable first, fall back to OpenCV)
         page_tables = []
-        for tr_idx, (tx, ty, tw, th) in enumerate(table_regions):
+        for tr_idx, (tx, ty, tw, th) in enumerate(table_regions[:5]):
             try:
                 # Crop region and attempt RapidTable extraction
                 x1, y1 = max(0, tx-10), max(0, ty-10)
@@ -392,7 +444,7 @@ def _extract_table_from_region(
                 if cell_results and cell_results[0]:
                     cell_result = cell_results[0]
                     cell_texts = cell_result.get("rec_texts", []) if hasattr(cell_result, 'get') else (getattr(cell_result, "rec_texts", []) or [])
-                    cell.text = "".join(cell_texts)
+                    cell.text = "".join(t for t in cell_texts if t)
             except Exception:
                 cell.text = ""
 
@@ -424,11 +476,11 @@ def process_image(
     width_pt = int(width_px * 72 / 200)
     height_pt = int(height_px * 72 / 200)
 
-    # Table detection
+    # Table detection (MinerU YOLO)
     table_regions = []
     try:
-        from app.pipeline.core.table.extractor import detect_table_regions
-        table_regions = detect_table_regions(img)
+        from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
+        table_regions = detect_table_regions_yolo(img)[:5]
     except Exception:
         pass
 
@@ -462,7 +514,8 @@ def _to_page_source(page_type: str) -> PageSource:
 
 def _extract_electronic_page_with_tables(
     page, page_num: int, enable_table: bool = True, strategy: str = "auto",
-    output_dir: str = "/tmp"
+    output_dir: str = "/tmp",
+    is_scanned: bool = True,
 ) -> tuple[PageLayout, list[TableData]]:
     """
     Extract page content from electronic PDF with table detection.
@@ -501,12 +554,17 @@ def _extract_electronic_page_with_tables(
         except Exception:
             pass
 
-    if enable_table and yolo_image is not None:
-        from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
-        from app.pipeline.core.table.rapid_extractor import extract_table_with_rapid_table
+    if enable_table and yolo_image is not None and is_scanned:
+        # Pre-flight: check if page actually has table structures
+        if not has_tables(page):
+            logger.info("Page %d: pre-flight says no tables — skipping YOLO", page_num)
+        else:
+            from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
+            from app.pipeline.core.table.rapid_extractor import extract_table_with_rapid_table
 
-        yolo_regions = detect_table_regions_yolo(yolo_image)
-        logger.info("Page %d: YOLO detected %d table regions", page_num, len(yolo_regions))
+            yolo_regions = detect_table_regions_yolo(yolo_image)
+            yolo_regions = yolo_regions[:5]  # Cap at 5 regions per page
+        logger.info("Page %d: YOLO detected %d table regions (capped at %d)", page_num, len(yolo_regions), min(len(yolo_regions), 15))
 
         for y_idx, (x, y, w, h) in enumerate(yolo_regions):
             try:

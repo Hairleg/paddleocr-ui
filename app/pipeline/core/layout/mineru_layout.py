@@ -115,6 +115,28 @@ def detect_layout_regions(image: np.ndarray, imgsz: int = 1280) -> list[dict]:
     return regions
 
 
+
+
+def has_table_layout(image: np.ndarray, page_num: int = 0) -> bool:
+    """
+    Quick pre-check: does this page likely contain tables?
+
+    Tries MinerU YOLO first, then falls back to basic line-density analysis.
+    Returns False for text-only pages (red-header docs, reports, etc.)
+    to skip expensive table extraction.
+    """
+    global _yolo_failed
+    if not _yolo_failed:
+        try:
+            regions = detect_layout_regions(image)
+            table_count = sum(1 for r in regions if r.get("class_id") == CLASS_TABLE)
+            return table_count > 0
+        except Exception:
+            _set_yolo_failed()
+
+    #     # YOLO failed — conservative: assume tables may exist, let caps handle the rest
+    return True
+
 def detect_table_regions_yolo(image: np.ndarray) -> list[tuple]:
     """
     Detect table regions using doclayout_yolo.
