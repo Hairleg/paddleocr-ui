@@ -1,0 +1,45 @@
+# Portainer Stack — PaddleOCR UI v0.1
+# 使用方法：
+#   1. docker load -i paddleocr-ui_v0.1.tar  （导入镜像）
+#   2. 在 Portainer → Stacks → Add stack，粘贴本文件内容
+#   3. 调整下方环境变量后部署
+#
+# Author: sizhchan | Org: dgaudit | Version: v0.1 | Date: 2026-05-28
+
+version: "3.8"
+
+services:
+  paddleocr:
+    image: paddleocr-ui:v0.1
+    container_name: paddleocr-ui
+    ports:
+      - "8000:8000"
+    environment:
+      # ── 管理员账户（首次启动自动创建，修改后重启生效）──
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=admin123
+      # ── JWT 密钥 ⚠ 生产环境请修改为随机字符串 ──
+      - PADDLEOCR_SECRET=change-me-to-a-random-string
+      # ── PaddleOCR 配置（不要改）──
+      - PADDLE_PDX_MODEL_SOURCE=modelscope
+      - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+      - PYTHONUNBUFFERED=1
+    volumes:
+      # SQLite 数据库（用户、任务记录）持久化
+      - paddleocr_db:/app/app/data
+      # 上传文件持久化
+      - paddleocr_uploads:/app/app/uploads
+      # OCR 输出结果持久化
+      - paddleocr_outputs:/app/app/data/outputs
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 90s
+      retries: 3
+
+volumes:
+  paddleocr_db:
+  paddleocr_uploads:
+  paddleocr_outputs:
