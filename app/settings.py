@@ -5,13 +5,9 @@ Version: v0.1.2
 Date: 2026-06-01
 """
 
-"""
-Runtime admin settings — CPU threads, concurrency, resource estimates.
-
+"""Runtime admin settings — CPU threads, concurrency, resource estimates.
 Values are loaded from DB on startup, overridable via env PADDLEOCR_CPU_THREADS / PADDLEOCR_MAX_CONCURRENT.
 """
-
-from __future__ import annotations
 
 import os
 import logging

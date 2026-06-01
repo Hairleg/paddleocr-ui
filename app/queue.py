@@ -17,6 +17,7 @@ import logging
 import os
 import shutil
 import tempfile
+import uuid
 
 from app.db import get_db
 
@@ -75,7 +76,7 @@ async def process_job(job_id: str) -> None:
 
         completed = 0
         for f in ok_files:
-            file_id = f.get("path", "unknown").replace("/", "_")
+            file_id = f"{uuid.uuid4().hex[:8]}_{f.get('path', 'unknown').replace('/', '_')}"
             await db.execute(
                 "INSERT INTO job_files (id, job_id, file_path, file_type, status) VALUES (?, ?, ?, ?, 'processing')",
                 (file_id, job_id, f["path"], f.get("type", "")),
@@ -104,7 +105,7 @@ async def process_job(job_id: str) -> None:
                     import glob as gmod
                     pdf_files = gmod.glob(f"app/uploads/{job_id}.*")
                     pdf_path = pdf_files[0] if pdf_files else None
-                    if not pdf_path:
+                    if not pdf_path or not os.path.exists(pdf_path):
                         raise FileNotFoundError("Uploaded file not found")
                     doc_layout = process_pdf(pdf_path, out_dir, **job_settings)
                 else:
@@ -120,12 +121,15 @@ async def process_job(job_id: str) -> None:
                 write_word(doc_layout, docx_path)
                 xlsx_path = os.path.join(out_dir, "tables.xlsx")
                 write_excel(doc_layout.tables, xlsx_path)
-                # Generate plain text file
-                from app.pipeline.export.text_writer import write_text
-                txt_path = os.path.join(out_dir, "output.txt")
-                write_text(doc_layout, txt_path)
 
-                zip_path = create_archive(doc_layout, out_dir, job_id[:8], f["path"])
+                # Non-critical: text + archive (failure should not fail the job)
+                zip_path = ""
+                try:
+                    from app.pipeline.export.text_writer import write_text
+                    write_text(doc_layout, os.path.join(out_dir, "output.txt"))
+                    zip_path = create_archive(doc_layout, out_dir, job_id[:8], f["path"])
+                except Exception as exc:
+                    logger.warning("Archive/text step failed (non-fatal): %s", exc)
 
                 await db.execute(
                     "UPDATE job_files SET status='completed', output_zip=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",

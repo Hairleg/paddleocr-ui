@@ -37,7 +37,12 @@ MISSING="$MISSING $(check_pkg doclayout_yolo doclayout-yolo)"
 MISSING="$MISSING $(check_pkg magic_pdf magic-pdf)"
 MISSING="$MISSING $(check_pkg docx python-docx)"
 MISSING="$MISSING $(check_pkg openpyxl openpyxl)"
+MISSING="$MISSING $(check_pkg aiosqlite aiosqlite)"
 MISSING="$MISSING $(check_pkg fastapi fastapi)"
+MISSING="$MISSING $(check_pkg jose python-jose)"
+MISSING="$MISSING $(check_pkg passlib passlib)"
+MISSING="$MISSING $(check_pkg aiofiles aiofiles)"
+MISSING="$MISSING $(check_pkg multipart python-multipart)"
 MISSING=$(echo "$MISSING" | xargs)
 
 if [ -n "$MISSING" ]; then
