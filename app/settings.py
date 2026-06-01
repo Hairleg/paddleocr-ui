@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 # ── Defaults (tuned by admin, production: 8c16GB) ──
 DEFAULT_CPU_THREADS = 8      # PaddleOCR OpenMP/MKL threads per task
 DEFAULT_MAX_CONCURRENT = 2   # Max simultaneous OCR pipeline tasks
+DEFAULT_MAX_RUNTIME_MINUTES = 15  # Per-task timeout before auto-cancellation
 
 # ── Memory model (PaddleOCR ONNX, PP-OCRv5) ──
 MEMORY_BASE_MB = 600         # det + rec model weights (~300 MB each)
@@ -54,6 +55,10 @@ def get_cpu_threads() -> int:
 
 def get_max_concurrent() -> int:
     return max(1, get_int("max_concurrent", DEFAULT_MAX_CONCURRENT))
+
+
+def get_max_runtime_minutes() -> int:
+    return max(1, get_int("max_runtime_minutes", DEFAULT_MAX_RUNTIME_MINUTES))
 
 
 def memory_estimate(threads: int | None = None) -> dict:

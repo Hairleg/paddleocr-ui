@@ -107,7 +107,22 @@ async def process_job(job_id: str) -> None:
                     pdf_path = pdf_files[0] if pdf_files else None
                     if not pdf_path or not os.path.exists(pdf_path):
                         raise FileNotFoundError("Uploaded file not found")
-                    doc_layout = process_pdf(pdf_path, out_dir, **job_settings)
+
+                    # Run blocking pipeline with configurable timeout
+                    from app.settings import get_max_runtime_minutes
+                    from functools import partial
+                    timeout_sec = get_max_runtime_minutes() * 60
+                    _runner = partial(process_pdf, pdf_path, out_dir, **job_settings)
+                    try:
+                        doc_layout = await asyncio.wait_for(
+                            asyncio.get_event_loop().run_in_executor(None, _runner),
+                            timeout=timeout_sec,
+                        )
+                    except asyncio.TimeoutError:
+                        raise TimeoutError(
+                            f"超过最大运行时间（{get_max_runtime_minutes()}分钟），"
+                            f"已停止OCR。若需要更长运行时间，请联系管理员。"
+                        )
                 else:
                     # Image file
                     img_path = f"app/uploads/{job_id}{f.get('type', '.png')}"

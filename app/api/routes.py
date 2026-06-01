@@ -150,15 +150,17 @@ async def api_change_password(data: dict, user: dict = Depends(current_user)):
 @router.get("/api/admin/settings")
 async def api_admin_get_settings(admin: dict = Depends(admin_required)):
     """Get current runtime settings and resource estimates (admin only)."""
-    from app.settings import get, get_int, memory_estimate, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT
+    from app.settings import get, get_int, memory_estimate, get_max_runtime_minutes, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT
 
     threads = get_int("cpu_threads", DEFAULT_CPU_THREADS)
     concurrent = get_int("max_concurrent", DEFAULT_MAX_CONCURRENT)
+    runtime = get_max_runtime_minutes()
     mem = memory_estimate(threads)
 
     return {
         "cpu_threads": threads,
         "max_concurrent": concurrent,
+        "max_runtime_minutes": runtime,
         "cpu_cores": os.cpu_count() or 8,
         "memory_mb": mem,
     }
@@ -170,9 +172,9 @@ async def api_admin_update_settings(
     admin: dict = Depends(admin_required),
 ):
     """Update runtime settings (admin only). Accepted keys: cpu_threads, max_concurrent."""
-    from app.settings import set_, save_to_db, get_int, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT
+    from app.settings import set_, save_to_db, get_int, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT, DEFAULT_MAX_RUNTIME_MINUTES
 
-    allowed = {"cpu_threads", "max_concurrent"}
+    allowed = {"cpu_threads", "max_concurrent", "max_runtime_minutes"}
     updated = {}
 
     for key, val in data.items():
@@ -185,6 +187,8 @@ async def api_admin_update_settings(
         if key == "cpu_threads":
             int_val = max(1, min(int_val, os.cpu_count() or 8))
         elif key == "max_concurrent":
+            int_val = max(1, int_val)
+        elif key == "max_runtime_minutes":
             int_val = max(1, int_val)
         set_(key, int_val)
         await save_to_db(key, int_val)
