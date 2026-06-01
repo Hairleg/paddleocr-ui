@@ -49,6 +49,44 @@ FONT_FALLBACK_MAP = {
 }
 
 
+
+
+def _merge_adjacent_paragraphs(elements):
+    """Merge adjacent text elements with similar font sizes into flowing paragraphs."""
+    import copy
+    if len(elements) < 2:
+        return
+    merged = []
+    prev = None
+    for elem in elements:
+        if elem.type != 1 or elem.type != getattr(prev, 'type', None):  # Only merge PARAGRAPH
+            merged.append(elem)
+            prev = elem
+            continue
+        if not prev or not hasattr(prev, 'content') or not prev.content:
+            merged.append(elem)
+            prev = elem
+            continue
+        if not elem.content:
+            merged.append(elem)
+            prev = elem
+            continue
+        
+        # Compare font sizes — merge if similar (< 4pt difference)
+        prev_size = prev.content[-1].font_size if prev.content else 12
+        cur_size = elem.content[0].font_size if elem.content else 12
+        if abs(prev_size - cur_size) < 4:
+            # Merge: append current content to previous
+            prev.content.extend(elem.content)
+            # Update bbox to encompass both
+            px, py, pw, ph = prev.bbox
+            ex, ey, ew, eh = elem.bbox
+            prev.bbox = (min(px, ex), min(py, ey), max(px+pw, ex+ew)-min(px, ex), max(py+ph, ey+eh)-min(py, ey))
+        else:
+            merged.append(elem)
+            prev = elem
+    elements[:] = merged
+
 def write_word(doc_layout: DocumentLayout, output_path: str) -> str:
     """
     Write DocumentLayout to a .docx file.
@@ -71,13 +109,15 @@ def write_word(doc_layout: DocumentLayout, output_path: str) -> str:
     for page_idx, page in enumerate(doc_layout.pages):
         # Apply government document font rules if applicable
         apply_government_font_rules(page.elements, page.height)
+        # Merge adjacent paragraphs with similar font sizes (Chinese gov doc style)
+        _merge_adjacent_paragraphs(page.elements)
 
         # Add page break between pages (not before the first)
         if page_idx > 0:
             doc.add_page_break()
 
-        # Add page marker comment (useful for debugging/auditing)
-        _add_page_marker(doc, page)
+        # Page marker disabled — cleaner output for production
+        # _add_page_marker(doc, page)
 
         # Process elements in reading order
         for elem_idx in page.reading_order:

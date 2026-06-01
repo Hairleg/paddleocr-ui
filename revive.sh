@@ -77,22 +77,6 @@ if [ -d "$TOOL/models/rapidocr" ]; then
     echo "   ✅ rapidocr"
 fi
 
-echo "=== 4. 启动服务 ==="
-cd "$PROJECT"
-fuser -k 8000/tcp 2>/dev/null || true
-mkdir -p app/uploads app/data
-
-python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --log-level error &
-PID=$!
-sleep 3
-
-if kill -0 $PID 2>/dev/null && curl -sf http://localhost:8000/health > /dev/null 2>&1; then
-    echo "   ✅ 服务已启动 (PID $PID)"
-    echo "   🌐 http://localhost:8000"
-else
-    echo "   ❌ 启动失败"
-    exit 1
-fi
 
 echo ""
 echo "=== 复活完成 ==="

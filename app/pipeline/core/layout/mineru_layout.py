@@ -52,16 +52,12 @@ def get_layout_model():
     if _yolo_model is None:
         try:
             import torch
-            # Enable loading of all pickled objects from trusted ModelScope source
             _orig_load = torch.load
-            def _trusted_load(*args, **kwargs):
-                kwargs.setdefault('weights_only', False)
-                return _orig_load(*args, **kwargs)
-            torch.load = _trusted_load
-            from ultralytics import YOLO
-            _yolo_model = YOLO(MODEL_PATH)
-            torch.load = _orig_load  # Restore after loading
-            logger.info("doclayout_yolo model loaded: %s", MODEL_PATH)
+            torch.load = lambda *a, **kw: _orig_load(*a, **dict(kw, weights_only=False))
+            from doclayout_yolo import YOLOv10
+            _yolo_model = YOLOv10(MODEL_PATH)
+            torch.load = _orig_load
+            logger.info("doclayout_yolo model loaded via YOLOv10: %s", MODEL_PATH)
         except Exception as exc:
             logger.warning("doclayout_yolo not available: %s", exc)
             _yolo_model = None
@@ -130,11 +126,17 @@ def has_table_layout(image: np.ndarray, page_num: int = 0) -> bool:
         try:
             regions = detect_layout_regions(image)
             table_count = sum(1 for r in regions if r.get("class_id") == CLASS_TABLE)
-            return table_count > 0
+            if table_count > 0:
+                return True
+            # YOLO found no tables — but could be model issue
+            # If YOLO was just marked failed, assume tables exist
+            if _yolo_failed:
+                return True
+            return False
         except Exception:
             _set_yolo_failed()
 
-    #     # YOLO failed — conservative: assume tables may exist, let caps handle the rest
+    # YOLO failed — conservative: assume tables may exist
     return True
 
 def detect_table_regions_yolo(image: np.ndarray) -> list[tuple]:
@@ -146,6 +148,10 @@ def detect_table_regions_yolo(image: np.ndarray) -> list[tuple]:
     all_regions = detect_layout_regions(image)
     tables = []
     for r in all_regions:
-        if r["class_id"] == CLASS_TABLE:
+        if r["class_id"] == CLASS_TABLE and r.get("confidence", 0) >= 0.60:
+            w, h = r["bbox"][2], r["bbox"][3]
+            # Reject very thin/small regions (likely text lines)
+            if h < 30 or w < 100:
+                continue
             tables.append(r["bbox"])
     return tables

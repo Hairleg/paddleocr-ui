@@ -6,7 +6,7 @@ pypdfium2==5.8.0             # PaddleOCR 自带，高性能 PDF 渲染
 
 # ── OCR 引擎 (PaddleOCR 3.x = PaddleX 架构) ──
 paddleocr==3.5.0
-paddlepaddle==3.2.2          # PaddleX 运行时推理引擎 (3.3.1 有 ONEDNN bug)
+paddlepaddle==3.0.0          # PaddleX 运行时推理引擎 (3.3.1 有 ONEDNN bug)
 
 # ── 文档大模型解析 (MinerU) ──
 magic-pdf==1.3.12

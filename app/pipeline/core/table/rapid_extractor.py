@@ -135,9 +135,11 @@ def is_valid_table(rows: list[list[str]], min_rows: int = 3, min_cols: int = 2,
     max_cols = max(len(r) for r in rows) if rows else 0
     if max_cols < min_cols:
         return False
-    # Count non-empty cells
+    # Helper: get text from cell (handles both str and TableCell objects)
+    def _ct(c) -> str:
+        return (c.text if hasattr(c, 'text') else c or '').strip()
     total = sum(len(r) for r in rows)
-    non_empty = sum(1 for r in rows for c in r if c.strip())
+    non_empty = sum(1 for r in rows for c in r if _ct(c))
     if total == 0 or non_empty / total < min_fill_ratio:
         return False
     return True
