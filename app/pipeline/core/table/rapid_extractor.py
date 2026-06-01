@@ -50,11 +50,20 @@ def extract_table_with_rapid_table(
 
     try:
         from rapid_table import RapidTable
-        rt = RapidTable()
-        result = rt(roi_path)
     except ImportError:
-        logger.warning("rapid_table not installed — install with: pip install rapid_table rapidocr")
+        logger.warning("rapid_table not installed")
         return None
+
+    try:
+        rt = RapidTable()
+        if rt is None or not callable(rt):
+            raise RuntimeError("RapidTable() returned %s" % type(rt))
+    except Exception as exc:
+        logger.warning("rapid_table init failed: %s", exc)
+        return None
+
+    try:
+        result = rt(roi_path)
     except Exception as exc:
         logger.warning("rapid_table inference failed: %s", exc)
         return None

@@ -39,6 +39,8 @@ async def lifespan(app: FastAPI):
     Path("app/data/outputs").mkdir(parents=True, exist_ok=True)
     await init_db()
     await ensure_admin()
+    from app.settings import load_from_db
+    await load_from_db()
     await requeue_stale_tasks()
 
     worker_task = asyncio.create_task(worker())

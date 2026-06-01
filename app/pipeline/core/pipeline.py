@@ -18,6 +18,8 @@ Orchestrates the full processing of a PDF document:
 
 import gc
 import logging
+import sys
+import time as _time
 import os
 from pathlib import Path
 from typing import Optional
@@ -71,6 +73,7 @@ def process_pdf(
     table_strategy = kwargs.get("table_strategy", "lines")
     enable_table_merge = kwargs.get("table_merge", False) if isinstance(kwargs.get("table_merge"), bool) else str(kwargs.get("table_merge", "0")) == "1"
     enable_stamp = kwargs.get("stamp", True) if isinstance(kwargs.get("stamp"), bool) else str(kwargs.get("stamp", "0")) != "0"
+    ocr_lang = kwargs.get("lang", "ch")
     doc = fitz.open(pdf_path)
     image_level = int(kwargs.get("image", 0))  # 0=text only, 1=moderate, 2=deep
     total_pages = len(doc)
@@ -137,7 +140,7 @@ def process_pdf(
 # ── OCR full page (lazy import PaddleOCR for scanned pages) ──
         try:
             from app.pipeline.core.ocr.engine import predict_ocr
-            ocr_result = predict_ocr(image_path)
+            ocr_result = predict_ocr(image_path, lang=ocr_lang)
             page_ocr = ocr_result[0] if ocr_result else None
         except Exception as exc:
             logger.error("OCR failed on page %d: %s", page_num + 1, exc)
@@ -183,7 +186,7 @@ def process_pdf(
         # ── OCR full page (lazy import PaddleOCR for scanned pages) ──
         try:
             from app.pipeline.core.ocr.engine import predict_ocr
-            ocr_result = predict_ocr(image_path)
+            ocr_result = predict_ocr(image_path, lang=ocr_lang)
             page_ocr = ocr_result[0] if ocr_result else None
         except Exception as exc:
             logger.error("OCR failed on page %d: %s", page_num + 1, exc)
@@ -226,7 +229,6 @@ def process_pdf(
             except Exception as exc:
                 logger.error("Table extraction failed region %d on page %d: %s",
                            tr_idx, page_num + 1, exc)
-
         # Reading order: sort by Y
         reading_order = list(range(len(elements)))
         reading_order.sort(key=lambda i: elements[i].bbox[1])
@@ -301,10 +303,9 @@ def _build_text_elements_from_ocr(
             tx, ty, tw, th = px, py, pw, ph
             inside_table = False
             for rx, ry, rw, rh in table_regions:
-                # Check if text bbox overlaps >50% with a table region
                 ox = max(0, min(tx + tw, rx + rw) - max(tx, rx))
                 oy = max(0, min(ty + th, ry + rh) - max(ty, ry))
-                if ox > tw * 0.3 and oy > th * 0.3:
+                if (ox > tw * 0.1 and oy > th * 0.1) or (ox > 15 and oy > 15):
                     inside_table = True
                     break
             if inside_table:
@@ -334,7 +335,18 @@ def _build_text_elements_from_ocr(
         )
         elements.append(elem)
 
-    return elements
+    # Dedup: text that repeats across pages (page headers/footers) keep only first
+    seen = set()
+    deduped = []
+    for elem in elements:
+        text = elem.content[0].text.strip() if elem.content else ""
+        if text and len(text) >= 4 and text in seen:
+            continue
+        if text:
+            seen.add(text)
+        deduped.append(elem)
+
+    return deduped
 
 
 def _extract_table_from_region(
@@ -518,8 +530,10 @@ def _extract_electronic_page_with_tables(
             from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
             from app.pipeline.core.table.rapid_extractor import extract_table_with_rapid_table
 
+            _ys = _time.time()
             yolo_regions = detect_table_regions_yolo(yolo_image)
-            yolo_regions = yolo_regions[:5]  # Cap at 5 regions per page
+            yolo_regions = yolo_regions[:5]
+            print(f"[TIMING] Page {page_num}: YOLO done ({_time.time()-_ys:.1f}s, {len(yolo_regions)} tables)", flush=True)  # Cap at 5 regions per page
         logger.info("Page %d: YOLO detected %d table regions", page_num, len(yolo_regions))
 
         for y_idx, (x, y, w, h) in enumerate(yolo_regions):
@@ -552,6 +566,16 @@ def _extract_electronic_page_with_tables(
             continue
         bbox = block.get("bbox", (0, 0, 0, 0))
         bx, by, bx2, by2 = bbox
+
+        # Skip header/footer blocks on page 2+ (short text in top/bottom 5%)
+        page_h = page.rect.height
+        in_header = by < page_h * 0.04
+        in_footer = by2 > page_h * 0.96
+        if page_num > 1 and (in_header or in_footer):
+            spans = [s for line in block.get("lines",[]) for s in line.get("spans",[])]
+            total_text = "".join([s.get("text","").strip() for s in spans])
+            if len(total_text) < 10:
+                continue
 
         # Skip if this block is inside any detected table
         inside_table = False
@@ -835,8 +859,10 @@ def _extract_electronic_page_with_tables(
             from app.pipeline.core.layout.mineru_layout import detect_table_regions_yolo
             from app.pipeline.core.table.rapid_extractor import extract_table_with_rapid_table
 
+            _ys = _time.time()
             yolo_regions = detect_table_regions_yolo(yolo_image)
-            yolo_regions = yolo_regions[:5]  # Cap at 5 regions per page
+            yolo_regions = yolo_regions[:5]
+            print(f"[TIMING] Page {page_num}: YOLO done ({_time.time()-_ys:.1f}s, {len(yolo_regions)} tables)", flush=True)  # Cap at 5 regions per page
         logger.info("Page %d: YOLO detected %d table regions", page_num, len(yolo_regions))
 
         for y_idx, (x, y, w, h) in enumerate(yolo_regions):
@@ -869,6 +895,16 @@ def _extract_electronic_page_with_tables(
             continue
         bbox = block.get("bbox", (0, 0, 0, 0))
         bx, by, bx2, by2 = bbox
+
+        # Skip header/footer blocks on page 2+ (short text in top/bottom 5%)
+        page_h = page.rect.height
+        in_header = by < page_h * 0.04
+        in_footer = by2 > page_h * 0.96
+        if page_num > 1 and (in_header or in_footer):
+            spans = [s for line in block.get("lines",[]) for s in line.get("spans",[])]
+            total_text = "".join([s.get("text","").strip() for s in spans])
+            if len(total_text) < 10:
+                continue
 
         # Skip if this block is inside any detected table
         inside_table = False

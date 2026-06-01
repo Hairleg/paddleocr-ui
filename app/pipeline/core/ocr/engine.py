@@ -24,26 +24,37 @@ os.environ.setdefault("PADDLE_PDX_MODEL_SOURCE", "modelscope")
 os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
 
 # ── Multi-core CPU configuration ──
-# PaddlePaddle inference uses OpenMP for parallelism. By default OMP_NUM_THREADS=1
-# (single-threaded). We auto-detect available cores and set a reasonable default.
-# Override with PADDLEOCR_NUM_THREADS environment variable.
-# On 96-core servers, PaddleOCR inference benefits from 8-16 threads;
-# using all 96 cores is counterproductive due to ONEDNN thread pool overhead.
+# Reads from app.settings (env PADDLEOCR_CPU_THREADS → admin panel).
+# Fallback: PADDLEOCR_NUM_THREADS (legacy env) → auto-detect from memory.
 _cpu_count = os.cpu_count() or 4
-_default_threads = min(_cpu_count, 16)  # Cap at 16 for inference efficiency
-_num_threads = int(os.environ.get("PADDLEOCR_NUM_THREADS", str(_default_threads)))
-_num_threads = max(1, min(_num_threads, _cpu_count))
 
-os.environ.setdefault("OMP_NUM_THREADS", str(_num_threads))
-os.environ.setdefault("MKL_NUM_THREADS", str(_num_threads))
-# PaddleX internal parallelism flag
+def _resolve_threads() -> int:
+    """Resolve PaddleOCR thread count from settings/env/system."""
+    try:
+        from app.settings import get_cpu_threads
+        return get_cpu_threads()
+    except Exception:
+        pass
+    # Fallback: legacy env → auto-detect
+    if "PADDLEOCR_NUM_THREADS" in os.environ:
+        return max(1, min(int(os.environ["PADDLEOCR_NUM_THREADS"]), _cpu_count))
+    try:
+        import psutil
+        _avail_gb = psutil.virtual_memory().available / (1024**3)
+    except Exception:
+        _avail_gb = 16.0
+    return max(4, min(_cpu_count, int(_avail_gb / 0.3), 32))
+
+_num_threads = _resolve_threads()
+
+os.environ["OMP_NUM_THREADS"] = str(_num_threads)
+os.environ["MKL_NUM_THREADS"] = str(_num_threads)
 os.environ.setdefault("PADDLE_PDX_INFER_WORKER_NUM", str(_num_threads))
 
-logger = logging.getLogger(__name__)  # Define early for init message
+logger = logging.getLogger(__name__)
 
 logger.info(
-    "CPU: %d cores detected, using %d threads for PaddleOCR inference. "
-    "Override with env PADDLEOCR_NUM_THREADS.",
+    "CPU: %d cores detected, using %d threads for PaddleOCR inference.",
     _cpu_count, _num_threads,
 )
 
@@ -78,13 +89,9 @@ def get_ocr(lang: str = "ch") -> PaddleOCR:
             "Subsequent requests will be fast.",
             lang,
         )
-        # NOTE: The following quality parameters can be added for maximum
-        # accuracy, but they significantly increase ONEDNN kernel compilation
-        # time and memory usage (may cause swap thrashing on <8GB systems):
-        #   text_det_limit_side_len=960, text_det_thresh=0.2,
-        #   text_det_box_thresh=0.4
-        # Default parameters with PP-OCRv5_server + 250 DPI already provide
-        # excellent accuracy for Chinese document OCR.
+        # Quality parameters disabled for ONNX stability on CPU.
+        # Enable for GPU inference or when memory > 32GB:
+        #   text_det_limit_side_len=960, text_det_thresh=0.2, text_det_box_thresh=0.4
         _ocr_instance = PaddleOCR(lang=lang)
         logger.info("PaddleOCR initialized, running warmup...")
 
@@ -144,7 +151,7 @@ def recognize(image_path: str) -> list[dict]:
     return output
 
 
-def predict_ocr(image_path: str):
+def predict_ocr(image_path: str, lang: str = "ch"):
     """
     Run OCR and return the raw PaddleOCR 3.5 predict() result.
 
@@ -153,9 +160,10 @@ def predict_ocr(image_path: str):
 
     Args:
         image_path: Path to an image file.
+        lang: Language code for OCR model selection.
 
     Returns:
         List of OCRResult objects.
     """
-    ocr = get_ocr()
+    ocr = get_ocr(lang)
     return ocr.predict(image_path)

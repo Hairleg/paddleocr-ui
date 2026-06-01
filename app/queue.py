@@ -175,14 +175,25 @@ async def process_job(job_id: str) -> None:
 
 
 async def worker() -> None:
-    """Background worker: pull one job at a time and process it."""
-    logger.info("Job worker started")
-    while True:
-        job_id = await job_queue.get()
-        try:
-            await process_job(job_id)
-        finally:
-            job_queue.task_done()
+    """Background worker: spawn concurrent workers based on settings."""
+    from app.settings import get_max_concurrent
+    max_workers = get_max_concurrent()
+    logger.info("Job worker started (max %d concurrent)", max_workers)
+
+    async def _worker(worker_id: int):
+        while True:
+            job_id = await job_queue.get()
+            try:
+                logger.info("[W%d] Processing job %s", worker_id, job_id)
+                await process_job(job_id)
+            except Exception as exc:
+                logger.error("[W%d] Job %s failed: %s", worker_id, job_id, exc)
+            finally:
+                job_queue.task_done()
+
+    tasks = [asyncio.create_task(_worker(i)) for i in range(max_workers)]
+    # Wait forever (workers are infinite loops)
+    await asyncio.gather(*tasks)
 
 
 async def requeue_stale_tasks() -> None:

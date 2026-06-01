@@ -145,6 +145,60 @@ async def api_change_password(data: dict, user: dict = Depends(current_user)):
         await db.close()
 
 
+# ===== Admin Settings API =====
+
+@router.get("/api/admin/settings")
+async def api_admin_get_settings(admin: dict = Depends(admin_required)):
+    """Get current runtime settings and resource estimates (admin only)."""
+    from app.settings import get, get_int, memory_estimate, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT
+
+    threads = get_int("cpu_threads", DEFAULT_CPU_THREADS)
+    concurrent = get_int("max_concurrent", DEFAULT_MAX_CONCURRENT)
+    mem = memory_estimate(threads)
+
+    return {
+        "cpu_threads": threads,
+        "max_concurrent": concurrent,
+        "cpu_cores": os.cpu_count() or 8,
+        "memory_mb": mem,
+    }
+
+
+@router.put("/api/admin/settings")
+async def api_admin_update_settings(
+    data: dict,
+    admin: dict = Depends(admin_required),
+):
+    """Update runtime settings (admin only). Accepted keys: cpu_threads, max_concurrent."""
+    from app.settings import set_, save_to_db, get_int, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT
+
+    allowed = {"cpu_threads", "max_concurrent"}
+    updated = {}
+
+    for key, val in data.items():
+        if key not in allowed:
+            continue
+        try:
+            int_val = int(val)
+        except (ValueError, TypeError):
+            return JSONResponse(status_code=400, content={"error": f"{key} must be an integer"})
+        if key == "cpu_threads":
+            int_val = max(1, min(int_val, os.cpu_count() or 8))
+        elif key == "max_concurrent":
+            int_val = max(1, int_val)
+        set_(key, int_val)
+        await save_to_db(key, int_val)
+        updated[key] = int_val
+
+    logger.info("Admin settings updated: %s", updated)
+
+    return {
+        "status": "ok",
+        "updated": updated,
+        "note": "Settings applied to new tasks. Active tasks unchanged until next run.",
+    }
+
+
 # ===== Job API =====
 
 @router.post("/api/jobs/precheck")
@@ -224,9 +278,24 @@ async def api_confirm_job(job_id: str, user: dict = Depends(current_user)):
 
 @router.get("/api/jobs")
 async def api_list_jobs(user: dict = Depends(current_user)):
-    """List all jobs for current user."""
+    """List all jobs for current user, with queue position and global stats."""
     db = await get_db()
     try:
+        # Global stats
+        gc = await db.execute("SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status")
+        gr = await gc.fetchall()
+        stats = {"total": 0, "queued": 0, "processing": 0, "completed": 0, "failed": 0}
+        for r in gr:
+            s = r["status"]
+            if s in stats: stats[s] = r["cnt"]
+            stats["total"] += r["cnt"]
+        processed = stats["completed"] + stats["failed"]
+
+        # Queue positions
+        qc = await db.execute("SELECT id FROM jobs WHERE status='queued' ORDER BY created_at")
+        qr = await qc.fetchall()
+        queue_map = {r["id"]: i + 1 for i, r in enumerate(qr)}
+
         cursor = await db.execute(
             """SELECT j.id, j.source_filename, j.status, j.error_message,
                       j.created_at, j.updated_at,
@@ -236,7 +305,18 @@ async def api_list_jobs(user: dict = Depends(current_user)):
             (user["id"],),
         )
         rows = await cursor.fetchall()
-        return {"jobs": [dict(r) for r in rows]}
+        jobs = []
+        for r in rows:
+            j = dict(r)
+            j["queue_position"] = queue_map.get(j["id"])
+            jobs.append(j)
+
+        return {
+            "jobs": jobs,
+            "stats": {"total": stats["total"], "processed": processed,
+                      "queued": stats["queued"], "processing": stats["processing"],
+                      "completed": stats["completed"], "failed": stats["failed"]},
+        }
     finally:
         await db.close()
 
@@ -423,3 +503,4 @@ async def api_admin_delete_user(
         return {"status": "ok"}
     finally:
         await db.close()
+

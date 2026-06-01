@@ -67,6 +67,11 @@ async def init_db() -> None:
                 FOREIGN KEY (job_id) REFERENCES jobs(id)
             );
 
+            CREATE TABLE IF NOT EXISTS app_settings (
+                key   TEXT PRIMARY KEY,
+                value TEXT NOT NULL
+            );
+
             CREATE INDEX IF NOT EXISTS idx_jobs_user_id ON jobs(user_id);
             CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
             CREATE INDEX IF NOT EXISTS idx_job_files_job_id ON job_files(job_id);

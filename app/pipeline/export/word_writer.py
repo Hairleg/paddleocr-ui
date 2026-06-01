@@ -59,7 +59,7 @@ def _merge_adjacent_paragraphs(elements):
     merged = []
     prev = None
     for elem in elements:
-        if elem.type != 1 or elem.type != getattr(prev, 'type', None):  # Only merge PARAGRAPH
+        if elem.type != ElementType.PARAGRAPH or elem.type != getattr(prev, 'type', None):  # Only merge PARAGRAPH
             merged.append(elem)
             prev = elem
             continue

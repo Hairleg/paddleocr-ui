@@ -31,9 +31,10 @@ MISSING="$MISSING $(check_pkg paddleocr paddleocr)"
 MISSING="$MISSING $(check_pkg fitz PyMuPDF)"
 MISSING="$MISSING $(check_pkg cv2 opencv-contrib-python)"
 MISSING="$MISSING $(check_pkg rapid_table rapid_table)"
+MISSING="$MISSING $(check_pkg rapidocr rapidocr)"
 MISSING="$MISSING $(check_pkg rapidocr_onnxruntime rapidocr_onnxruntime)"
+MISSING="$MISSING $(check_pkg doclayout_yolo doclayout-yolo)"
 MISSING="$MISSING $(check_pkg magic_pdf magic-pdf)"
-MISSING="$MISSING $(check_pkg ultralytics ultralytics)"
 MISSING="$MISSING $(check_pkg docx python-docx)"
 MISSING="$MISSING $(check_pkg openpyxl openpyxl)"
 MISSING="$MISSING $(check_pkg fastapi fastapi)"
@@ -41,9 +42,16 @@ MISSING=$(echo "$MISSING" | xargs)
 
 if [ -n "$MISSING" ]; then
     echo "   安装: $MISSING"
-    pip3 install -q $MISSING bcrypt==4.0.1
+    pip3 install -q $MISSING bcrypt==4.0.1 'numpy<2.0'
 else
     echo "   ✅ 全部就绪"
+fi
+
+# Pin paddlepaddle to 3.0.0 (3.3.x has PIR compatibility issues)
+PY_PADDLE_VER=$(python3 -c "import paddle; print(paddle.__version__)" 2>/dev/null || echo "none")
+if [ "$PY_PADDLE_VER" != "3.0.0" ]; then
+    echo "   ⚠️ Paddle $PY_PADDLE_VER → downgrading to 3.0.0"
+    pip3 install -q paddlepaddle==3.0.0 --force-reinstall
 fi
 
 echo "=== 3. 模型软链（/root → /mnt/workspace/tool）==="

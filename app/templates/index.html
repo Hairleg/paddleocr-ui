@@ -227,6 +227,20 @@ a{color:#4a90d9;text-decoration:none}
 <div class="card hidden" id="tab-admin">
   <h2>用户管理</h2>
   <div id="userList"><p style="color:#bbb;text-align:center;padding:40px">加载中...</p></div>
+  <h2 style="margin-top:24px">系统设置</h2>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+    <div>
+      <label style="font-size:12px;color:#666">CPU线程数 (每任务)</label>
+      <input id="adminCpuThreads" type="number" min="1" max="32" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
+    </div>
+    <div>
+      <label style="font-size:12px;color:#666">最大并发任务数</label>
+      <input id="adminMaxConcurrent" type="number" min="1" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
+    </div>
+  </div>
+  <div id="adminMemEstimate" style="margin-top:8px;font-size:12px;color:#888"></div>
+  <button class="btn btn-primary" onclick="saveAdminSettings()" style="margin-top:12px">保存设置</button>
+  <span id="adminSettingsMsg" style="margin-left:12px;font-size:13px"></span>
 </div>
 
 <!-- Change Password Modal -->
@@ -274,7 +288,7 @@ document.querySelectorAll('.tab-btn').forEach(btn=>{
     document.querySelectorAll('#tab-ocr,#tab-history,#tab-admin,#tab-help').forEach(c=>c.classList.add('hidden'));
     document.getElementById('tab-'+btn.dataset.tab).classList.remove('hidden');
     if(btn.dataset.tab==='history')loadJobs();
-    if(btn.dataset.tab==='admin')loadUsers();
+    if(btn.dataset.tab==='admin'){loadUsers();loadAdminSettings();}
   });
 });
 
@@ -438,6 +452,37 @@ async function deleteUser(id,name){
   if(!confirm(`确定删除用户 "${name}" 吗？此操作不可撤销。`))return;
   await fetch(`/api/admin/users/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+token}});
   loadUsers();
+}
+
+// ── Admin Settings ──
+async function loadAdminSettings(){
+  const resp=await fetch('/api/admin/settings',{headers:{'Authorization':'Bearer '+token}});
+  if(!resp.ok)return;
+  const data=await resp.json();
+  document.getElementById('adminCpuThreads').value=data.cpu_threads||8;
+  document.getElementById('adminMaxConcurrent').value=data.max_concurrent||2;
+  const mem=data.memory_mb||{};
+  document.getElementById('adminMemEstimate').innerHTML=
+    `预估内存：单任务 ~${(mem.per_task_mb/1024).toFixed(1)}GB × ${data.max_concurrent}并发 ≈ ${(mem.peak_total_mb/1024).toFixed(1)}GB峰值 &nbsp; CPU核心: ${data.cpu_cores}`;
+}
+
+async function saveAdminSettings(){
+  const cpu=parseInt(document.getElementById('adminCpuThreads').value)||8;
+  const conc=parseInt(document.getElementById('adminMaxConcurrent').value)||2;
+  const msg=document.getElementById('adminSettingsMsg');
+  msg.style.color='#888'; msg.textContent='保存中...';
+  const resp=await fetch('/api/admin/settings',{
+    method:'PUT',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+    body:JSON.stringify({cpu_threads:cpu,max_concurrent:conc})
+  });
+  if(resp.ok){
+    msg.style.color='#389e0d'; msg.textContent='已保存（新任务生效）';
+    loadAdminSettings();
+  } else {
+    const d=await resp.json();
+    msg.style.color='#cf1322'; msg.textContent='失败: '+(d.error||'未知');
+  }
 }
 
 // ── Change Password ──
