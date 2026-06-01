@@ -1,8 +1,8 @@
 """
 Author: sizhchan
 Org: dgaudit
-Version: v0.1
-Date: 2026-05-27
+Version: v0.1.2
+Date: 2026-06-01
 """
 
 """Job queue — asyncio.Queue for serial job processing.
