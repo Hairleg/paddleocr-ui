@@ -1,97 +1,0 @@
-[INFO] 2026-05-28 05:22:14,834 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:14,835 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:14,835 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:14,906 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:14,918 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:14,918 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s][WARNING] 2026-05-28 05:22:15,231 [RapidOCR] main.py:132: The text detection result is empty
-[WARNING] 2026-05-28 05:22:15,231 [RapidTable] main.py:157: OCR Result is empty
-OCR: 100%|██████████| 1/1 [00:00<00:00,  9.92it/s]OCR: 100%|██████████| 1/1 [00:00<00:00,  9.90it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  6.12it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  6.12it/s]
-2026-05-28 05:22:15,232 [ERROR] app.pipeline.core.pipeline: Table extraction failed region 48 on page 5: can only concatenate str (not "NoneType") to str
-[INFO] 2026-05-28 05:22:15,269 [RapidTable] download_file.py:56: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:15,269 [RapidTable] base.py:53: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:15,270 [RapidTable] main.py:35: Using /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:15,413 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:15,418 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:15,418 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:15,515 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:15,516 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:15,516 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:15,578 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:15,588 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:15,588 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR: 100%|██████████| 1/1 [00:00<00:00,  5.59it/s]OCR: 100%|██████████| 1/1 [00:00<00:00,  5.58it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  4.58it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  4.57it/s]
-[INFO] 2026-05-28 05:22:15,982 [RapidTable] download_file.py:56: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:15,982 [RapidTable] base.py:53: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:15,982 [RapidTable] main.py:35: Using /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:16,208 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:16,215 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:16,215 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:16,346 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:16,347 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:16,347 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:16,429 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:16,443 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:16,443 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s][WARNING] 2026-05-28 05:22:16,746 [RapidOCR] main.py:132: The text detection result is empty
-[WARNING] 2026-05-28 05:22:16,746 [RapidTable] main.py:157: OCR Result is empty
-OCR: 100%|██████████| 1/1 [00:00<00:00,  9.26it/s]OCR: 100%|██████████| 1/1 [00:00<00:00,  9.24it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  6.62it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  6.61it/s]
-2026-05-28 05:22:16,746 [ERROR] app.pipeline.core.pipeline: Table extraction failed region 50 on page 5: can only concatenate str (not "NoneType") to str
-[INFO] 2026-05-28 05:22:16,788 [RapidTable] download_file.py:56: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:16,789 [RapidTable] base.py:53: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:16,789 [RapidTable] main.py:35: Using /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:16,982 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:16,989 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:16,989 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:17,117 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:17,118 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:17,119 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:17,198 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:17,212 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:17,212 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s][WARNING] 2026-05-28 05:22:17,617 [RapidTable] main.py:157: OCR Result is empty
-OCR: 100%|██████████| 1/1 [00:00<00:00,  4.70it/s]OCR: 100%|██████████| 1/1 [00:00<00:00,  4.69it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  3.86it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  3.86it/s]
-2026-05-28 05:22:17,620 [ERROR] app.pipeline.core.pipeline: Table extraction failed region 51 on page 5: can only concatenate str (not "NoneType") to str
-[INFO] 2026-05-28 05:22:17,679 [RapidTable] download_file.py:56: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:17,679 [RapidTable] base.py:53: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:17,679 [RapidTable] main.py:35: Using /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:17,823 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:17,828 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:17,828 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:17,927 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:17,928 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:17,928 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:17,990 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:18,000 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:18,000 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s][WARNING] 2026-05-28 05:22:18,245 [RapidOCR] main.py:132: The text detection result is empty
-[WARNING] 2026-05-28 05:22:18,245 [RapidTable] main.py:157: OCR Result is empty
-OCR: 100%|██████████| 1/1 [00:00<00:00, 10.31it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  7.39it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  7.39it/s]
-2026-05-28 05:22:18,246 [ERROR] app.pipeline.core.pipeline: Table extraction failed region 52 on page 5: can only concatenate str (not "NoneType") to str
-[INFO] 2026-05-28 05:22:18,308 [RapidTable] download_file.py:56: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:18,309 [RapidTable] base.py:53: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:18,309 [RapidTable] main.py:35: Using /usr/local/lib/python3.11/site-packages/rapid_table/models/slanet-plus.onnx
-[INFO] 2026-05-28 05:22:18,471 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:18,476 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:18,476 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_det_mobile.onnx
-[INFO] 2026-05-28 05:22:18,572 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:18,573 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:18,573 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_ppocr_mobile_v2.0_cls_mobile.onnx
-[INFO] 2026-05-28 05:22:18,635 [RapidOCR] base.py:22: Using engine_name: onnxruntime
-[INFO] 2026-05-28 05:22:18,645 [RapidOCR] download_file.py:60: File exists and is valid: /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-[INFO] 2026-05-28 05:22:18,645 [RapidOCR] main.py:57: Using /usr/local/lib/python3.11/site-packages/rapidocr/models/ch_PP-OCRv4_rec_mobile.onnx
-BatchRec:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR:   0%|          | 0/1 [00:00<?, ?it/s]
-OCR: 100%|██████████| 1/1 [00:00<00:00,  5.12it/s]OCR: 100%|██████████| 1/1 [00:00<00:00,  5.11it/s]
-BatchRec: 100%|██████████| 1/1 [00:00<00:00,  2.64it/s]BatchRec: 100%|██████████| 1/1 [00:00<00:00,  2.64it/s]

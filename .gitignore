@@ -13,3 +13,4 @@ env/
 *.egg-info/
 .ipynb_checkpoints/
 build/dockerimage/output/
+_archive/
