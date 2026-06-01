@@ -1,10 +1,10 @@
-# Author: sizhchan | Org: dgaudit | Version: v0.1 | Date: 2026-05-27
+# Author: sizhchan | Org: dgaudit | Version: v0.1.2.2 | Date: 2026-06-01
 services:
   paddleocr-ui:
     build:
       context: .
       dockerfile: Dockerfile
-    image: paddleocr-ui:v0.1
+    image: paddleocr-ui:v0.1.2
     container_name: paddleocr-ui
     ports:
       - "8000:8000"
