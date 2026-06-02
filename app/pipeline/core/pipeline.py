@@ -305,7 +305,7 @@ def _build_text_elements_from_ocr(
             for rx, ry, rw, rh in table_regions:
                 ox = max(0, min(tx + tw, rx + rw) - max(tx, rx))
                 oy = max(0, min(ty + th, ry + rh) - max(ty, ry))
-                if (ox > tw * 0.1 and oy > th * 0.1) or (ox > 15 and oy > 15):
+                if (ox > tw * 0.7 and oy > th * 0.7) or (ox > 15 and oy > 15):
                     inside_table = True
                     break
             if inside_table:

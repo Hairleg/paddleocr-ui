@@ -56,6 +56,16 @@ MISSING="$MISSING $(check_pkg aiofiles aiofiles)"
 MISSING="$MISSING $(check_pkg multipart python-multipart)"
 MISSING=$(echo "$MISSING" | xargs)
 
+# Force numpy <2.0 (PaddleOCR 3.0.0 incompatible with numpy 2.x)
+NUMPY_VER=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null || echo "none")
+if [ "$NUMPY_VER" != "none" ]; then
+    MAJOR=$(echo "$NUMPY_VER" | cut -d. -f1)
+    if [ "$MAJOR" -ge 2 ]; then
+        echo "   ⚠️  numpy $NUMPY_VER → 降级到 <2.0"
+        pip3 install -q 'numpy<2.0' --force-reinstall
+    fi
+fi
+
 if [ -n "$MISSING" ]; then
     echo "   安装: $MISSING"
     pip3 install -q $MISSING 'numpy<2.0' 'bcrypt==4.0.1'
