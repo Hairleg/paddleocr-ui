@@ -305,8 +305,7 @@ async def api_list_jobs(user: dict = Depends(current_user)):
                       j.created_at, j.updated_at,
                       (SELECT COUNT(*) FROM job_files WHERE job_id=j.id) as file_count,
                       (SELECT COUNT(*) FROM job_files WHERE job_id=j.id AND status='completed') as completed_files
-               FROM jobs j WHERE j.user_id=? ORDER BY j.created_at DESC LIMIT 50""",
-            (user["id"],),
+               FROM jobs j ORDER BY j.created_at DESC LIMIT 50""",
         )
         rows = await cursor.fetchall()
         jobs = []

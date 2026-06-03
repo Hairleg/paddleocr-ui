@@ -29,7 +29,7 @@ security_scheme = HTTPBearer(auto_error=False)  # Allow optional auth via query 
 
 # ---- Password helpers ----
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password)
+    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:

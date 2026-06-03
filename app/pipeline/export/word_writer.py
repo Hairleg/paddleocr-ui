@@ -199,7 +199,10 @@ def _apply_span_formatting(run, span: TextSpan) -> None:
 
     # Font size
     if span.font_size:
-        run.font.size = Pt(span.font_size)
+        sz = span.font_size
+        if sz > 22: sz = 16
+        elif sz > 18: sz = 18
+        run.font.size = Pt(sz)
     else:
         run.font.size = DEFAULT_FONT_SIZE
 
