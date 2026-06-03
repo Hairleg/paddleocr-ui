@@ -68,7 +68,7 @@ fi
 
 if [ -n "$MISSING" ]; then
     echo "   安装: $MISSING"
-    pip3 install -q $MISSING 'numpy<2.0' 'bcrypt==4.0.1'
+    pip3 install -q $MISSING 'bcrypt==4.0.1'
     echo "   ✅ 安装完成"
 else
     echo "   ✅ 全部就绪"
