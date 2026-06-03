@@ -55,7 +55,20 @@ MISSING="$MISSING $(check_pkg bcrypt bcrypt)"
 MISSING="$MISSING $(check_pkg aiofiles aiofiles)"
 MISSING="$MISSING $(check_pkg multipart python-multipart)"
 MISSING=$(echo "$MISSING" | xargs)
-    pip3 install -q $MISSING 'bcrypt==4.0.1'
+
+# Force numpy <2.0 (PaddleOCR 3.0.0 incompatible with numpy 2.x)
+NUMPY_VER=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null || echo "none")
+if [ "$NUMPY_VER" != "none" ]; then
+    MAJOR=$(echo "$NUMPY_VER" | cut -d. -f1)
+    if [ "$MAJOR" -ge 2 ]; then
+        echo "   ⚠️  numpy $NUMPY_VER → 降级到 <2.0"
+        pip3 install -q 'numpy<2.0' --force-reinstall
+    fi
+fi
+
+if [ -n "$MISSING" ]; then
+    echo "   安装: $MISSING"
+    pip3 install -q $MISSING 'numpy<2.0' 'bcrypt==4.0.1'
     echo "   ✅ 安装完成"
 else
     echo "   ✅ 全部就绪"
@@ -69,15 +82,13 @@ if [ "$PY_PADDLE_VER" != "3.0.0" ]; then
     echo "   ⚠️  当前 $PY_PADDLE_VER → 降级到 3.0.0（避免 PIR 兼容性问题）"
     pip3 install -q paddlepaddle==3.0.0 --force-reinstall
     echo "   ✅ PaddlePaddle 3.0.0"
+
+# ── numpy 兼容性 ──
+pip3 install -q 'numpy<2.0' --force-reinstall
+echo "   ✅ numpy $(python3 -c "import numpy;print(numpy.__version__)" 2>/dev/null)"
 else
     echo "   ✅ PaddlePaddle 3.0.0"
 fi
-
-# ── numpy 兼容性锁定（Docker build 顺序）──
-echo -n "   锁定 numpy 兼容版本... "
-pip3 install -q 'numpy<2.0' --force-reinstall
-NUMPY_VER=$(python3 -c "import numpy; print(numpy.__version__)" 2>/dev/null)
-echo "✅ numpy $NUMPY_VER"
 
 # ── 4. 模型软链 ──
 echo ""
@@ -140,11 +151,9 @@ pkill -f "uvicorn app.main:app" 2>/dev/null || true
 sleep 1
 
 # 启动（后台运行）
-# ── 线程配置 (动态检测: 32-64核 → 32线程) ──
 export OMP_NUM_THREADS=32
 export MKL_NUM_THREADS=32
 export PADDLE_PDX_INFER_WORKER_NUM=32
-
 nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 \
     > /tmp/paddleocr-ui.log 2>&1 &
 PID=$!
