@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # ── Defaults (tuned by admin, production: 8c16GB) ──
 DEFAULT_CPU_THREADS = 8      # PaddleOCR OpenMP/MKL threads per task
-DEFAULT_MAX_CONCURRENT = 2   # Max simultaneous OCR pipeline tasks
+DEFAULT_MAX_CONCURRENT = 0   # 0 = auto-detect (cores * 0.75 / 8)
 DEFAULT_MAX_RUNTIME_MINUTES = 15  # Per-task timeout before auto-cancellation
 
 # ── Memory model (PaddleOCR ONNX, PP-OCRv5) ──
@@ -54,7 +54,14 @@ def get_cpu_threads() -> int:
 
 
 def get_max_concurrent() -> int:
-    return max(1, get_int("max_concurrent", DEFAULT_MAX_CONCURRENT))
+    val = get_int("max_concurrent", DEFAULT_MAX_CONCURRENT)
+    if val <= 0:
+        # Auto: ~75% CPU across ONEDNN-effective threads (~8/task)
+        cores = os.cpu_count() or 4
+        val = max(1, int(cores * 0.75 / 8))
+        # Cap at 8 concurrent tasks (stability)
+        val = min(val, 8)
+    return max(1, val)
 
 
 def get_max_runtime_minutes() -> int:
