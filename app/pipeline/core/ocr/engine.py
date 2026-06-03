@@ -42,8 +42,9 @@ def _resolve_threads() -> int:
     return max(4, min(_cpu_count, int(_avail_gb / 0.3), 32))
 _num_threads = _resolve_threads()
 
-os.environ["OMP_NUM_THREADS"] = str(_num_threads)
-os.environ["MKL_NUM_THREADS"] = str(_num_threads)
+# Only set if not already configured by user
+os.environ.setdefault("OMP_NUM_THREADS", str(_num_threads))
+os.environ.setdefault("MKL_NUM_THREADS", str(_num_threads))
 os.environ.setdefault("PADDLE_PDX_INFER_WORKER_NUM", str(_num_threads))
 
 logger = logging.getLogger(__name__)

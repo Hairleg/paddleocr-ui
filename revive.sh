@@ -142,9 +142,9 @@ pkill -f "uvicorn app.main:app" 2>/dev/null || true
 sleep 1
 
 # 启动（后台运行）
-export OMP_NUM_THREADS=32
-export MKL_NUM_THREADS=32
-export PADDLE_PDX_INFER_WORKER_NUM=32
+export OMP_NUM_THREADS=16
+export MKL_NUM_THREADS=16
+export PADDLE_PDX_INFER_WORKER_NUM=16
 nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 \
     > /tmp/paddleocr-ui.log 2>&1 &
 PID=$!
