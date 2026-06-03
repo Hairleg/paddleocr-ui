@@ -29,22 +29,17 @@ os.environ.setdefault("PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK", "True")
 _cpu_count = os.cpu_count() or 4
 
 def _resolve_threads() -> int:
-    """Resolve PaddleOCR thread count from settings/env/system."""
-    try:
-        from app.settings import get_cpu_threads
-        return get_cpu_threads()
-    except Exception:
-        pass
-    # Fallback: legacy env → auto-detect
+    """Dynamically detect optimal PaddleOCR thread count."""
+    # User can override via env var or admin panel
     if "PADDLEOCR_NUM_THREADS" in os.environ:
         return max(1, min(int(os.environ["PADDLEOCR_NUM_THREADS"]), _cpu_count))
+    # Auto-detect based on CPU cores and available memory (~300MB/thread)
     try:
         import psutil
         _avail_gb = psutil.virtual_memory().available / (1024**3)
     except Exception:
         _avail_gb = 16.0
     return max(4, min(_cpu_count, int(_avail_gb / 0.3), 32))
-
 _num_threads = _resolve_threads()
 
 os.environ["OMP_NUM_THREADS"] = str(_num_threads)
