@@ -55,13 +55,6 @@ MISSING="$MISSING $(check_pkg bcrypt bcrypt)"
 MISSING="$MISSING $(check_pkg aiofiles aiofiles)"
 MISSING="$MISSING $(check_pkg multipart python-multipart)"
 MISSING=$(echo "$MISSING" | xargs)
-
-if [ "$NUMPY_VER" != "none" ]; then
-    MAJOR=$(echo "$NUMPY_VER" | cut -d. -f1)
-    if [ "$MAJOR" -ge 2 ]; then
-
-if [ -n "$MISSING" ]; then
-    echo "   安装: $MISSING"
     pip3 install -q $MISSING 'bcrypt==4.0.1'
     echo "   ✅ 安装完成"
 else
