@@ -58,7 +58,7 @@ def get_max_concurrent() -> int:
     if val <= 0:
         # Auto: ~75% CPU across ONEDNN-effective threads (~8/task)
         cores = os.cpu_count() or 4
-        val = max(1, int(cores * 0.75 / 8))
+        val = max(1, (cores + 3) // 8)  # ceil(cores/8) ≈ 80% CPU
         # Cap at 8 concurrent tasks (stability)
         val = min(val, 8)
     return max(1, val)
