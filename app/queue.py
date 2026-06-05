@@ -31,7 +31,11 @@ async def enqueue_job(job_id: str, file_record: dict = None):
     if file_record is None:
         import glob as _gm
         # 从上传目录找到文件
+        # 搜有扩展名和无扩展名两种情况
         uploads = _gm.glob("app/uploads/{}.*".format(job_id))
+        if not uploads:
+            # 无扩展名（precheck可能没写.pdf后缀）
+            uploads = _gm.glob("app/uploads/{}".format(job_id))
         if uploads:
             fpath = uploads[0]
             ext = fpath.rsplit(".", 1)[-1] if "." in fpath else ""
@@ -47,8 +51,10 @@ async def enqueue_job(job_id: str, file_record: dict = None):
     logger.info("Job %s enqueued (queue size ~%d)", job_id, _job_queue.qsize())
 
 async def process_job(job_id: str, file_record: dict):
+    logger.info("[JOB] process_job START %s", job_id[:8])
     from app.db import get_db
     db = await get_db()
+    logger.info("[JOB] db ok %s", job_id[:8])
     try:
         f = file_record
         file_id = f.get("id") or job_id
@@ -61,6 +67,8 @@ async def process_job(job_id: str, file_record: dict):
         if f.get("kind") or f.get("file_type", "") == "pdf":
             import glob as gmod
             pdf_files = gmod.glob("app/uploads/{}.*".format(job_id))
+            if not pdf_files:
+                pdf_files = gmod.glob("app/uploads/{}".format(job_id))
             pdf_path = pdf_files[0] if pdf_files else None
             if not pdf_path or not os.path.exists(pdf_path):
                 raise FileNotFoundError("Uploaded file not found")
@@ -73,40 +81,31 @@ async def process_job(job_id: str, file_record: dict):
             }
             from app.settings import get_max_runtime_minutes
             timeout_sec = get_max_runtime_minutes() * 60
-            # 子进程隔离：避免 ONEDNN SIGSEGV 杀死 uvicorn
-            import sys as _sys
-            import json as _json
-            worker_script = f'''
-import sys, os, pickle, json
-sys.path.insert(0, "/mnt/workspace/project/paddleocr-ui")
-os.environ["PADDLE_PDX_MODEL_SOURCE"] = "modelscope"
-os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
-os.environ["FLAGS_enable_pir_api"] = "False"
-from app.pipeline.core.pipeline import process_pdf
-doc = process_pdf({pdf_path!r}, {out_dir!r}, **{repr(job_settings)})
-# 结果已在 process_pdf 内部写入磁盘
-print("OK", flush=True)
-'''
-            proc = await asyncio.create_subprocess_exec(
-                _sys.executable, "-c", worker_script,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-                close_fds=True,
-            )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout_sec
-            )
-            if proc.returncode != 0:
-                err = stderr.decode()[-500:] if stderr else "unknown"
-                raise RuntimeError(f"OCR subprocess failed (exit={proc.returncode}): {err}")
+            from functools import partial
+            _runner = partial(process_pdf, pdf_path, out_dir, **job_settings)
+            try:
+                doc_layout = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(None, _runner),
+                    timeout=timeout_sec,
+                )
+            except asyncio.TimeoutError:
+                raise TimeoutError("over time limit")
+
+            # 保存 pkl 用于独立调试
+            import pickle as _pk
+            with open(os.path.join(out_dir, "doc_layout.pkl"), "wb") as _f:
+                _pk.dump(doc_layout, _f)
         else:
             img_path = "app/uploads/{}{}".format(job_id, f.get("type") or f.get("file_type", ".png"))
             if not os.path.exists(img_path):
                 raise FileNotFoundError("Image not found")
+            from app.pipeline.core.pipeline import process_image
             doc_layout = process_image(img_path, out_dir)
 
         docx_path = os.path.join(out_dir, "output.docx")
+        write_word(doc_layout, docx_path)
         xlsx_path = os.path.join(out_dir, "tables.xlsx")
+        write_excel(doc_layout.tables, xlsx_path)
 
         zip_path = ""
         try:
@@ -145,8 +144,8 @@ async def _worker(wid: int):
         try:
             logger.info("[W%d] Processing job %s", wid, job_id)
             await process_job(job_id, file_record)
-        except Exception:
-            pass
+        except Exception as _ex:
+            logger.error("[W%d] job failed silently: %s", wid, _ex, exc_info=True)
         finally:
             _job_queue.task_done()
 
