@@ -174,7 +174,7 @@ async def api_admin_update_settings(
     """Update runtime settings (admin only). Accepted keys: cpu_threads, max_concurrent."""
     from app.settings import set_, save_to_db, get_int, DEFAULT_CPU_THREADS, DEFAULT_MAX_CONCURRENT, DEFAULT_MAX_RUNTIME_MINUTES
 
-    allowed = {"cpu_threads", "max_concurrent", "max_runtime_minutes"}
+    allowed = {"cpu_threads", "max_runtime_minutes"}  # max_concurrent 强制为1
     updated = {}
 
     for key, val in data.items():

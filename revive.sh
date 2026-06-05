@@ -142,9 +142,13 @@ pkill -f "uvicorn app.main:app" 2>/dev/null || true
 sleep 1
 
 # 启动（后台运行）
-export OMP_NUM_THREADS=16
-export MKL_NUM_THREADS=16
-export PADDLE_PDX_INFER_WORKER_NUM=16
+# 线程由 engine.py 动态检测（CPU核心数/内存自动计算）
+# PDX 模型源（避免外网下载超时）
+export PADDLE_PDX_MODEL_SOURCE=modelscope
+export PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
+export FLAGS_enable_pir_api=False
+# 线程由 engine.py 动态检测（CPU核心数/内存自动计算）
+
 nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 \
     > /tmp/paddleocr-ui.log 2>&1 &
 PID=$!

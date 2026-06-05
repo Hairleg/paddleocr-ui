@@ -119,12 +119,16 @@ def write_word(doc_layout: DocumentLayout, output_path: str) -> str:
         # Page marker disabled — cleaner output for production
         # _add_page_marker(doc, page)
 
-        # Process elements in reading order
-        for elem_idx in page.reading_order:
-            if elem_idx >= len(page.elements):
-                continue
-            elem = page.elements[elem_idx]
-            _write_element(doc, elem)
+        # Process elements in reading order (or all if no order specified)
+        if page.reading_order:
+            for elem_idx in page.reading_order:
+                if elem_idx >= len(page.elements):
+                    continue
+                elem = page.elements[elem_idx]
+                _write_element(doc, elem)
+        else:
+            for elem in page.elements:
+                _write_element(doc, elem)
 
     doc.save(output_path)
     logger.info("Word document written: %s", output_path)

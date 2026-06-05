@@ -5,11 +5,7 @@ Version: v0.1.2
 Date: 2026-06-01
 """
 
-"""Job queue — asyncio.Queue for serial job processing.
-
-One job is processed at a time. Within a job, files are processed sequentially.
-Each file goes through: precheck → render → OCR/TextExtract → Word/Excel/ZIP.
-"""
+"""Job queue — asyncio.Queue for serial job processing."""
 
 import asyncio
 import json
@@ -18,216 +14,159 @@ import os
 import shutil
 import tempfile
 import uuid
+from functools import partial
 
 from app.db import get_db
+from app.pipeline.core.pipeline import process_pdf, process_image
+from app.pipeline.export.word_writer import write_word
+from app.pipeline.export.excel_writer import write_excel
+from app.pipeline.export.archiver import create_archive
 
 logger = logging.getLogger(__name__)
 
-# The job queue holds job IDs
-job_queue: asyncio.Queue[str] = asyncio.Queue()
+_job_queue = asyncio.Queue(maxsize=50)
+_worker_count = 0
 
+async def enqueue_job(job_id: str, file_record: dict = None):
+    if file_record is None:
+        import glob as _gm
+        # 从上传目录找到文件
+        uploads = _gm.glob("app/uploads/{}.*".format(job_id))
+        if uploads:
+            fpath = uploads[0]
+            ext = fpath.rsplit(".", 1)[-1] if "." in fpath else ""
+            file_record = {
+                "id": job_id,
+                "file_path": fpath,
+                "file_type": ext,
+                "kind": "pdf" if ext.lower() == "pdf" else "image"
+            }
+        else:
+            file_record = {"id": job_id, "kind": "pdf", "path": ""}
+    await _job_queue.put((job_id, file_record))
+    logger.info("Job %s enqueued (queue size ~%d)", job_id, _job_queue.qsize())
 
-async def enqueue_job(job_id: str) -> None:
-    """Push a job ID into the processing queue."""
-    await job_queue.put(job_id)
-    logger.info("Job %s enqueued (queue size ~%d)", job_id, job_queue.qsize())
-
-
-async def process_job(job_id: str) -> None:
-    """
-    Process a single job through the full pipeline.
-
-    1. Load precheck data to get file list
-    2. For each file: run pipeline → generate Word/Excel → ZIP
-    3. Update status in DB
-    """
+async def process_job(job_id: str, file_record: dict):
+    from app.db import get_db
     db = await get_db()
     try:
-        # Mark job as processing
+        f = file_record
+        file_id = f.get("id") or job_id
+        file_path = f.get("path") or f.get("file_path", "")
+        if not file_path:
+            file_path = job_id
+        out_dir = os.path.join("app/data/outputs", job_id)
+        os.makedirs(out_dir, exist_ok=True)
+
+        if f.get("kind") or f.get("file_type", "") == "pdf":
+            import glob as gmod
+            pdf_files = gmod.glob("app/uploads/{}.*".format(job_id))
+            pdf_path = pdf_files[0] if pdf_files else None
+            if not pdf_path or not os.path.exists(pdf_path):
+                raise FileNotFoundError("Uploaded file not found")
+
+            job_settings = {
+                "lang": f.get("lang", "ch"),
+                "dpi": f.get("dpi", 200),
+                "enable_table": f.get("table", False),
+                "enable_table_merge": f.get("table_merge", False),
+            }
+            from app.settings import get_max_runtime_minutes
+            timeout_sec = get_max_runtime_minutes() * 60
+            # 子进程隔离：避免 ONEDNN SIGSEGV 杀死 uvicorn
+            import sys as _sys
+            import json as _json
+            worker_script = f'''
+import sys, os, pickle, json
+sys.path.insert(0, "/mnt/workspace/project/paddleocr-ui")
+os.environ["PADDLE_PDX_MODEL_SOURCE"] = "modelscope"
+os.environ["PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK"] = "True"
+os.environ["FLAGS_enable_pir_api"] = "False"
+from app.pipeline.core.pipeline import process_pdf
+doc = process_pdf({pdf_path!r}, {out_dir!r}, **{repr(job_settings)})
+# 结果已在 process_pdf 内部写入磁盘
+print("OK", flush=True)
+'''
+            proc = await asyncio.create_subprocess_exec(
+                _sys.executable, "-c", worker_script,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                close_fds=True,
+            )
+            stdout, stderr = await asyncio.wait_for(
+                proc.communicate(), timeout=timeout_sec
+            )
+            if proc.returncode != 0:
+                err = stderr.decode()[-500:] if stderr else "unknown"
+                raise RuntimeError(f"OCR subprocess failed (exit={proc.returncode}): {err}")
+        else:
+            img_path = "app/uploads/{}{}".format(job_id, f.get("type") or f.get("file_type", ".png"))
+            if not os.path.exists(img_path):
+                raise FileNotFoundError("Image not found")
+            doc_layout = process_image(img_path, out_dir)
+
+        docx_path = os.path.join(out_dir, "output.docx")
+        xlsx_path = os.path.join(out_dir, "tables.xlsx")
+
+        zip_path = ""
+        try:
+            from app.pipeline.export.text_writer import write_text
+            write_text(doc_layout, os.path.join(out_dir, "output.txt"))
+            zip_path = create_archive(doc_layout, out_dir, job_id[:8], f["path"])
+        except Exception as exc:
+            logger.warning("Archive/text failed: %s", exc)
+
         await db.execute(
-            "UPDATE jobs SET status='processing', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-            (job_id,),
+            "UPDATE job_files SET status='completed', output_zip=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+            (zip_path, file_id),
         )
         await db.commit()
-
-        # Load job info
-        row = await db.execute("SELECT * FROM jobs WHERE id=?", (job_id,))
-        job = await row.fetchone()
-        if not job:
-            return
-
-        precheck = json.loads(job["precheck_json"] or "{}")
-        ok_files = precheck.get("ok_files", [])
-
-        if not ok_files:
-            await db.execute(
-                "UPDATE jobs SET status='failed', error_message='No processable files', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (job_id,),
-            )
-            await db.commit()
-            return
-
-        # Process each file
-        from app.pipeline.core.pipeline import process_pdf
-        from app.pipeline.export.word_writer import write_word
-        from app.pipeline.export.excel_writer import write_excel
-        from app.pipeline.export.archiver import create_archive
-        from app.pipeline.ir.types import TableData
-
-        completed = 0
-        for f in ok_files:
-            file_id = f"{uuid.uuid4().hex[:8]}_{f.get('path', 'unknown').replace('/', '_')}"
-            await db.execute(
-                "INSERT INTO job_files (id, job_id, file_path, file_type, status) VALUES (?, ?, ?, ?, 'processing')",
-                (file_id, job_id, f["path"], f.get("type", "")),
-            )
-            await db.commit()
-
-            try:
-                out_dir = f"app/data/outputs/{job_id}/{file_id}"
-                os.makedirs(out_dir, exist_ok=True)
-
-                # Run pipeline
-                # Read user-configured settings from the job record
-                job_settings = {}
-                try:
-                    raw = job["settings"]
-                    if raw:
-                        try:
-                            job_settings = json.loads(raw)
-                        except (json.JSONDecodeError, TypeError):
-                            pass
-                except (KeyError, IndexError):
-                    pass
-
-                if f.get("type") == ".pdf":
-                    # Find the physical file
-                    import glob as gmod
-                    pdf_files = gmod.glob(f"app/uploads/{job_id}.*")
-                    pdf_path = pdf_files[0] if pdf_files else None
-                    if not pdf_path or not os.path.exists(pdf_path):
-                        raise FileNotFoundError("Uploaded file not found")
-
-                    # Run blocking pipeline with configurable timeout
-                    from app.settings import get_max_runtime_minutes
-                    from functools import partial
-                    timeout_sec = get_max_runtime_minutes() * 60
-                    _runner = partial(process_pdf, pdf_path, out_dir, **job_settings)
-                    try:
-                        doc_layout = await asyncio.wait_for(
-                            asyncio.get_event_loop().run_in_executor(None, _runner),
-                            timeout=timeout_sec,
-                        )
-                    except asyncio.TimeoutError:
-                        raise TimeoutError(
-                            f"超过最大运行时间（{get_max_runtime_minutes()}分钟），"
-                            f"已停止OCR。若需要更长运行时间，请联系管理员。"
-                        )
-                else:
-                    # Image file
-                    img_path = f"app/uploads/{job_id}{f.get('type', '.png')}"
-                    if not os.path.exists(img_path):
-                        raise FileNotFoundError(f"Image not found: {img_path}")
-                    from app.pipeline.core.pipeline import process_image
-                    doc_layout = process_image(img_path, out_dir)
-
-                # Write outputs
-                docx_path = os.path.join(out_dir, "output.docx")
-                write_word(doc_layout, docx_path)
-                xlsx_path = os.path.join(out_dir, "tables.xlsx")
-                write_excel(doc_layout.tables, xlsx_path)
-
-                # Non-critical: text + archive (failure should not fail the job)
-                zip_path = ""
-                try:
-                    from app.pipeline.export.text_writer import write_text
-                    write_text(doc_layout, os.path.join(out_dir, "output.txt"))
-                    zip_path = create_archive(doc_layout, out_dir, job_id[:8], f["path"])
-                except Exception as exc:
-                    logger.warning("Archive/text step failed (non-fatal): %s", exc)
-
-                await db.execute(
-                    "UPDATE job_files SET status='completed', output_zip=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                    (zip_path, file_id),
-                )
-                await db.commit()
-                completed += 1
-
-            except Exception as exc:
-                logger.exception("Job %s file %s failed", job_id, f["path"])
-                await db.execute(
-                    "UPDATE job_files SET status='failed', error_message=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                    (str(exc), file_id),
-                )
-                await db.commit()
-
-        # Mark job complete or failed
-        if completed == len(ok_files):
-            await db.execute(
-                "UPDATE jobs SET status='completed', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (job_id,),
-            )
-        elif completed > 0:
-            await db.execute(
-                "UPDATE jobs SET status='completed', error_message='Some files failed', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (job_id,),
-            )
-        else:
-            await db.execute(
-                "UPDATE jobs SET status='failed', error_message='All files failed', updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (job_id,),
-            )
-        await db.commit()
-
+        return True
     except Exception as exc:
-        logger.exception("Job %s failed", job_id)
+        logger.error("Job %s failed", job_id, exc_info=True)
         try:
-            await db.execute(
-                "UPDATE jobs SET status='failed', error_message=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-                (str(exc), job_id),
-            )
+            await db.execute("UPDATE job_files SET status='failed', updated_at=CURRENT_TIMESTAMP WHERE id=?", (file_id,))
             await db.commit()
-        except Exception:
+        except:
             pass
+        raise
     finally:
         await db.close()
 
+async def start_workers(n: int = 1):
+    global _worker_count
+    for i in range(n):
+        _worker_count += 1
+        asyncio.create_task(_worker(_worker_count))
 
-async def worker() -> None:
-    """Background worker: spawn concurrent workers based on settings."""
-    from app.settings import get_max_concurrent
-    max_workers = get_max_concurrent()
-    logger.info("Job worker started (max %d concurrent)", max_workers)
+async def _worker(wid: int):
+    while True:
+        job_id, file_record = await _job_queue.get()
+        try:
+            logger.info("[W%d] Processing job %s", wid, job_id)
+            await process_job(job_id, file_record)
+        except Exception:
+            pass
+        finally:
+            _job_queue.task_done()
 
-    async def _worker(worker_id: int):
-        while True:
-            job_id = await job_queue.get()
-            try:
-                logger.info("[W%d] Processing job %s", worker_id, job_id)
-                await process_job(job_id)
-            except Exception as exc:
-                logger.error("[W%d] Job %s failed: %s", worker_id, job_id, exc)
-            finally:
-                job_queue.task_done()
-
-    tasks = [asyncio.create_task(_worker(i)) for i in range(max_workers)]
-    # Wait forever (workers are infinite loops)
-    await asyncio.gather(*tasks)
-
-
-async def requeue_stale_tasks() -> None:
-    """On startup, re-queue any jobs left in 'queued' or 'processing' status."""
+# ── 兼容 main.py 入口 ──
+async def requeue_stale_tasks():
+    """重启时把 processing 状态的任务重置为 pending"""
+    from app.db import get_db
     db = await get_db()
     try:
-        cursor = await db.execute(
-            "SELECT id FROM jobs WHERE status IN ('queued','processing')"
-        )
-        rows = await cursor.fetchall()
-        for row in rows:
-            await enqueue_job(row["id"])
-        if rows:
-            logger.info("Re-queued %d stale job(s)", len(rows))
+        await db.execute("UPDATE job_files SET status='pending' WHERE status='processing'")
+        await db.commit()
     except Exception:
         pass
     finally:
         await db.close()
+
+async def worker():
+    """主 worker 入口，启动 1 个后台 worker"""
+    await start_workers(1)
+    # 永久等待，worker 在后台运行
+    import asyncio
+    while True:
+        await asyncio.sleep(3600)

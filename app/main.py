@@ -96,8 +96,8 @@ async def ensure_admin():
 async def _warmup_models():
     """Background task: pre-load PaddleOCR to trigger ONEDNN compilation."""
     try:
-        from app.pipeline.model_cache.preloader import preload_all
+        # from app.pipeline.model_cache.preloader import preload_all  # 子进程隔离，无需预载
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, preload_all)
+        # # await loop.run_in_executor(None, preload_all)  # 子进程隔离
     except Exception:
         logger.warning("Model pre-warm skipped", exc_info=True)

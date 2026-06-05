@@ -39,7 +39,6 @@ from app.pipeline.ir.types import (
     TableData,
     TableCell,
 )
-from app.pipeline.ir.builder import build_page_from_ocr_result
 # PaddleOCR is imported lazily — only needed for scanned pages
 from app.pipeline.core.watermark import remove_watermark, has_watermark
 
@@ -121,13 +120,15 @@ def process_pdf(
         # (Uncomment below if needed for specific document types)
         # try:
         #     if has_watermark(img):
-        #         img = remove_watermark(img)
-        #         cv2.imwrite(image_path, img)
+        #
+            img = remove_watermark(img)
+        #
+            cv2.imwrite(image_path, img)
         # except Exception:
         #     pass
         pass
 
-                # ── Red header enhancement (for Chinese government documents) ──
+        # ── Red header enhancement (for Chinese government documents) ──
         try:
             from app.pipeline.core.layout.red_header import has_red_header, enhance_red_text
             if has_red_header(img):
@@ -260,6 +261,34 @@ def process_pdf(
         sum(len(p.elements) for p in pages),
         len(all_tables),
     )
+    # 在线程归还池之前：保存 pickle + 写入 docx/xlsx
+    # 避免 ONEDNN 线程池清理时 SIGSEGV 丢结果
+    try:
+        import pickle as _pkl
+        os.makedirs(out_dir, exist_ok=True)
+        pkl_path = os.path.join(out_dir, "doc_layout.pkl")
+        with open(pkl_path, "wb") as _f:
+            _pkl.dump(doc_layout, _f)
+        logger.info("DocLayout saved: %s", pkl_path)
+    except Exception:
+        logger.warning("Pickle save failed", exc_info=True)
+
+    try:
+        from app.pipeline.export.word_writer import write_word
+        docx_path = os.path.join(out_dir, "output.docx")
+        write_word(doc_layout, docx_path)
+        logger.info("Word document written: %s", docx_path)
+    except Exception:
+        logger.warning("Writer failed", exc_info=True)
+
+    try:
+        from app.pipeline.export.excel_writer import write_excel
+        xlsx_path = os.path.join(out_dir, "tables.xlsx")
+        write_excel(doc_layout.tables, xlsx_path)
+        logger.info("Excel written: %s", xlsx_path)
+    except Exception:
+        logger.warning("Excel write failed", exc_info=True)
+
     return doc_layout
 
 
@@ -277,10 +306,23 @@ def _build_text_elements_from_ocr(
     because table extraction handles cells separately.
     This ensures no text is lost even if table extraction fails.
     """
-    rec_texts = page_ocr.get("rec_texts", []) if page_ocr and hasattr(page_ocr, 'get') else (getattr(page_ocr, "rec_texts", []) or [])
-    rec_scores = page_ocr.get("rec_scores", []) if page_ocr and hasattr(page_ocr, 'get') else (getattr(page_ocr, "rec_scores", []) or [])
-    rec_polys = page_ocr.get("rec_polys", []) if page_ocr and hasattr(page_ocr, 'get') else (getattr(page_ocr, "rec_polys", []) or [])
-    dt_polys = page_ocr.get("dt_polys", []) if page_ocr and hasattr(page_ocr, 'get') else (getattr(page_ocr, "dt_polys", []) or [])
+    # paddleocr 3.6.0: data nested in json['res']
+    if hasattr(page_ocr, 'json') and isinstance(page_ocr.json, dict):
+        res = page_ocr.json.get('res', {})
+        rec_texts = res.get('rec_texts', [])
+        rec_scores = res.get('rec_scores', [])
+        rec_polys = res.get('rec_polys', [])
+        dt_polys = res.get('dt_polys', [])
+    elif page_ocr and hasattr(page_ocr, 'get'):
+        rec_texts = page_ocr.get('rec_texts', [])
+        rec_scores = page_ocr.get('rec_scores', [])
+        rec_polys = page_ocr.get('rec_polys', [])
+        dt_polys = page_ocr.get('dt_polys', [])
+    else:
+        rec_texts = getattr(page_ocr, 'rec_texts', []) or []
+        rec_scores = getattr(page_ocr, 'rec_scores', []) or []
+        rec_polys = getattr(page_ocr, 'rec_polys', []) or []
+        dt_polys = getattr(page_ocr, 'dt_polys', []) or []
     polys = dt_polys if dt_polys else rec_polys
 
     elements = []

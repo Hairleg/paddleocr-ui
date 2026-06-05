@@ -5,7 +5,7 @@ opencv-contrib-python==4.10.0.84  # PaddleOCR 精确锁定
 pypdfium2==5.8.0             # PaddleOCR 自带，高性能 PDF 渲染
 
 # ── OCR 引擎 (PaddleOCR 3.x = PaddleX 架构) ──
-paddleocr==3.5.0
+paddleocr==3.6.0
 paddlepaddle==3.0.0          # PaddleX 运行时推理引擎 (3.3.1 有 ONEDNN bug)
 
 # ── 文档大模型解析 (MinerU) ──
@@ -26,7 +26,7 @@ python-docx==1.2.0
 pydantic==2.10.6             # magic-pdf 要求 <2.11，PaddleOCR 要求 >=2
 
 # ── 版本冲突调和 ──
-numpy==2.3.5                 # PaddleOCR 要求 <2.4，ultralytics/magic-pdf 兼容
+numpy==1.26.4                 # PaddleOCR 要求 <2.4，ultralytics/magic-pdf 兼容
 
 # ── Web 框架 ──
 fastapi==0.115.0

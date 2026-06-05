@@ -1,0 +1,464 @@
+=== PIR兼容性错误报告 ===
+环境: paddlepaddle==3.3.0, paddleocr==3.6.0, numpy==1.26.4
+时间: 2026-06-04
+
+=== 调试探针日志 (/tmp/pipeline_debug.log) ===
+PAGE_LOOP: page=1/16
+PAGE_TYPE: page=1 type=scanned
+OCR1_CALLED
+PAGE_LOOP: page=1/16
+PAGE_TYPE: page=1 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=2/16
+PAGE_TYPE: page=2 type=scanned
+PAGE_LOOP: page=2/16
+PAGE_TYPE: page=2 type=scanned
+OCR1_CALLED
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=3/16
+PAGE_TYPE: page=3 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=3/16
+PAGE_TYPE: page=3 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=4/16
+PAGE_TYPE: page=4 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=4/16
+PAGE_TYPE: page=4 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=5/16
+PAGE_TYPE: page=5 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=5/16
+PAGE_TYPE: page=5 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=6/16
+PAGE_TYPE: page=6 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=6/16
+PAGE_TYPE: page=6 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=7/16
+PAGE_TYPE: page=7 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=7/16
+PAGE_TYPE: page=7 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=8/16
+PAGE_TYPE: page=8 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=8/16
+PAGE_TYPE: page=8 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=9/16
+PAGE_TYPE: page=9 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=9/16
+PAGE_TYPE: page=9 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+PAGE_LOOP: page=1/16
+PAGE_TYPE: page=1 type=scanned
+PAGE_LOOP: page=1/16
+PAGE_TYPE: page=1 type=scanned
+OCR1_CALLED
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=2/16
+PAGE_TYPE: page=2 type=scanned
+PAGE_LOOP: page=2/16
+PAGE_TYPE: page=2 type=scanned
+OCR1_CALLED
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=3/16
+PAGE_TYPE: page=3 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=3/16
+PAGE_TYPE: page=3 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=4/16
+PAGE_TYPE: page=4 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=4/16
+PAGE_TYPE: page=4 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=5/16
+PAGE_TYPE: page=5 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=5/16
+PAGE_TYPE: page=5 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=6/16
+PAGE_TYPE: page=6 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=6/16
+PAGE_TYPE: page=6 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=7/16
+PAGE_TYPE: page=7 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=7/16
+PAGE_TYPE: page=7 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=8/16
+PAGE_TYPE: page=8 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=8/16
+PAGE_TYPE: page=8 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=9/16
+PAGE_TYPE: page=9 type=scanned
+OCR2_CALLED
+OCR1_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=9/16
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_TYPE: page=9 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=10/16
+PAGE_TYPE: page=10 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=10/16
+PAGE_TYPE: page=10 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=11/16
+PAGE_TYPE: page=11 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=11/16
+PAGE_TYPE: page=11 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+PAGE_LOOP: page=12/16
+PAGE_TYPE: page=12 type=scanned
+OCR1_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=12/16
+PAGE_TYPE: page=12 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+PAGE_LOOP: page=13/16
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_TYPE: page=13 type=scanned
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=13/16
+PAGE_TYPE: page=13 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+PAGE_LOOP: page=14/16
+PAGE_TYPE: page=14 type=scanned
+OCR1_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=14/16
+PAGE_TYPE: page=14 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+PAGE_LOOP: page=15/16
+PAGE_TYPE: page=15 type=scanned
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR1_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=15/16
+PAGE_TYPE: page=15 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+PAGE_LOOP: page=16/16
+PAGE_TYPE: page=16 type=scanned
+OCR1_CALLED
+OCR2_CALLED
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+PAGE_LOOP: page=16/16
+PAGE_TYPE: page=16 type=scanned
+OCR1_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+WRITER: 16 pages, page0_elements=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+OCR1_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+OCR2_CALLED
+OCR2_FAILED: (Unimplemented) ConvertPirAttribute2RuntimeAttribute not support [pir::ArrayAttribute<pir::DoubleAttribute>]  (at /paddle/paddle/fluid/framework/new_executor/instruction/onednn/onednn_instruction.cc:116)
+
+WRITER: 16 pages, page0_elements=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+WRITE_ELEM: type=ElementType.TABLE content_len=0
+
+
+=== 服务日志 (/tmp/paddleocr-ui.log) ===
+127.0.0.1:40928 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41090 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41222 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41350 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41474 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41634 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41756 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:41882 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42004 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42148 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42270 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42420 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42546 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42686 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42826 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:42970 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43096 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43230 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43360 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43490 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43622 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43772 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:43930 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44072 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44198 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44342 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44486 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44618 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44750 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:44892 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45030 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45162 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45314 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45496 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45646 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45798 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:45942 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46104 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46258 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46390 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46524 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46660 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+INFO:     127.0.0.1:46800 - "GET /api/jobs HTTP/1.1" 401 Unauthorized
+
+
+=== 结论 ===
+PIR (Paddle IR) ConvertPirAttribute2RuntimeAttribute 无法转换 ArrayAttribute<DoubleAttribute>。
+paddlepaddle 3.3.x 的 ONEDNN 引擎不支持 paddleocr 3.6.0 模型中的 PIR 浮点数组属性。
+已验证兼容组合: paddlepaddle==3.0.0 + paddleocr==3.6.0

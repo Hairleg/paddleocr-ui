@@ -1,3 +1,4 @@
+from __future__ import annotations
 """
 Author: sizhchan
 Org: dgaudit
@@ -42,10 +43,9 @@ def _resolve_threads() -> int:
     return max(4, min(_cpu_count, int(_avail_gb / 0.3), 32))
 _num_threads = _resolve_threads()
 
-# Only set if not already configured by user
-os.environ.setdefault("OMP_NUM_THREADS", str(_num_threads))
-os.environ.setdefault("MKL_NUM_THREADS", str(_num_threads))
-os.environ.setdefault("PADDLE_PDX_INFER_WORKER_NUM", str(_num_threads))
+os.environ["OMP_NUM_THREADS"] = str(_num_threads)
+os.environ["MKL_NUM_THREADS"] = str(_num_threads)
+os.environ["PADDLE_PDX_INFER_WORKER_NUM"] = str(_num_threads)
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +54,13 @@ logger.info(
     _cpu_count, _num_threads,
 )
 
-from paddleocr import PaddleOCR
+# PaddleOCR imported lazily inside get_ocr()
 
 # Global OCR instance (lazy-loaded singleton)
-_ocr_instance: Optional[PaddleOCR] = None
+_ocr_instance: Optional["PaddleOCR"] = None
 
 
-def get_ocr(lang: str = "ch") -> PaddleOCR:
+def get_ocr(lang: str = "ch") -> "PaddleOCR":
     """
     Return a cached PaddleOCR instance, creating one if needed.
 
@@ -79,6 +79,8 @@ def get_ocr(lang: str = "ch") -> PaddleOCR:
     """
     global _ocr_instance
     if _ocr_instance is None:
+        from paddleocr import PaddleOCR
+        # PaddleOCR imported lazily inside get_ocr()
         logger.info(
             "Initializing PaddleOCR 3.x (lang=%s). "
             "ONEDNN kernel compilation may take 5-10 minutes on first run. "
@@ -89,18 +91,7 @@ def get_ocr(lang: str = "ch") -> PaddleOCR:
         # Enable for GPU inference or when memory > 32GB:
         #   text_det_limit_side_len=960, text_det_thresh=0.2, text_det_box_thresh=0.4
         _ocr_instance = PaddleOCR(lang=lang)
-        logger.info("PaddleOCR initialized, running warmup...")
-
-        # Warmup: trigger ONEDNN compilation with a tiny dummy image
-        try:
-            import numpy as np, cv2
-            dummy = np.ones((100, 100, 3), dtype=np.uint8) * 255
-            cv2.imwrite("/tmp/_ocr_warmup.png", dummy)
-            _ocr_instance.predict("/tmp/_ocr_warmup.png")
-            logger.info("PaddleOCR warmup complete")
-        except Exception as exc:
-            logger.warning("PaddleOCR warmup had issue (non-fatal): %s", exc)
-
+        logger.info("PaddleOCR initialized (PDX preserved)")
         logger.info("PaddleOCR engine ready")
 
     return _ocr_instance

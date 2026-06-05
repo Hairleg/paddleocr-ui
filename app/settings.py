@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # ── Defaults (tuned by admin, production: 8c16GB) ──
 DEFAULT_CPU_THREADS = 8      # PaddleOCR OpenMP/MKL threads per task
 DEFAULT_MAX_CONCURRENT = 0   # 0 = auto-detect (cores * 0.75 / 8)
-DEFAULT_MAX_RUNTIME_MINUTES = 15  # Per-task timeout before auto-cancellation
+DEFAULT_MAX_RUNTIME_MINUTES = 120  # 含PDX编译10min+OCR 30min+writer 5min  # Per-task timeout before auto-cancellation
 
 # ── Memory model (PaddleOCR ONNX, PP-OCRv5) ──
 MEMORY_BASE_MB = 600         # det + rec model weights (~300 MB each)

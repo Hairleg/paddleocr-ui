@@ -93,3 +93,38 @@ paddleocr-ui/
 ├── requirements.txt
 └── README.md
 ```
+
+
+## 性能参考
+
+| 指标 | 数值 |
+|------|------|
+| OCR 速度 | **~111 秒/页**（含文本检测+识别+表格提取） |
+| 页间波动 | 60-184 秒（取决于页面复杂度、表格数量） |
+| 16 页合同总耗时 | ~28 分钟 |
+| PDX 首次编译 | 5-10 分钟（切换 PIR 模式后需重新编译） |
+| 并发能力 | **禁用**（ONEDNN 非线程安全） |
+| 进程稳定性 | PIR=Disabled 跨作业稳定，PIR=Enabled 第2次 SIGSEGV |
+
+### 当前配置
+
+```
+paddlepaddle == 3.0.0
+paddleocr    == 3.6.0
+numpy        == 1.26.4
+FLAGS_enable_pir_api = False   # 禁用 PIR 避免崩溃
+PADDLE_PDX_MODEL_SOURCE = modelscope
+CPU: 28 核 Intel Xeon
+内存: 28 GB
+```
+
+### 速度分解
+
+| 阶段 | 单页耗时 |
+|------|:--:|
+| PDF→PNG 渲染 (250 DPI) | ~3s |
+| OCR 文本检测 + 识别 | ~50s |
+| 表格检测 (YOLO) + 表格 OCR (RapidOCR) | ~55s |
+| Word/Excel 写入 | ~3s |
+
+> 含表格的页面（如合同）约 110s/页，纯文字页面约 60s/页。
