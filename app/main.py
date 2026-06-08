@@ -73,7 +73,7 @@ async def ensure_admin():
     from app.auth import hash_password
 
     username = os.environ.get("ADMIN_USERNAME", "admin")
-    password = os.environ.get("ADMIN_PASSWORD", "admin123")
+    password = os.environ.get("ADMIN_PASSWORD", "admin123")[:72]
 
     db = await get_db()
     try:
