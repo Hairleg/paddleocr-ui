@@ -124,12 +124,12 @@ a{color:#4a90d9;text-decoration:none}
   <h2>使用说明</h2>
 
   <h3 style="margin-top:20px;color:#333">一、系统组成</h3>
-  <p>本工具基于 <b>PaddleOCR 3.5</b>（百度飞桨）识别引擎 + <b>PyMuPDF</b>（PDF 解析）构建。整体分为三部分：</p>
+  <p>本工具基于 <b>PaddleOCR 3.6.0</b>（百度飞桨）识别引擎 + <b>PyMuPDF</b>（PDF 解析）构建。整体分为三部分：</p>
   <table style="margin:8px 0;width:100%">
     <tr><th style="text-align:left;width:100px">模块</th><th style="text-align:left">功能</th></tr>
     <tr><td>上传 &amp; 预检</td><td>接收 PDF/图片上传，检测文件类型、页数、是否可处理</td></tr>
     <tr><td>识别管线</td><td>PDF 分析 → 页面分类 → 文字提取/OCR → 表格检测 → 图片识别 → 印章检测 → 排版输出</td></tr>
-    <tr><td>结果导出</td><td>生成 Word（.docx）正文 + 嵌入表格、Excel（.xlsx）多 Sheet 表格、ZIP 归档下载</td></tr>
+    <tr><td>结果导出</td><td>生成 Word（.docx）、Excel（.xlsx）、TXT、ZIP（含全部文件）</td></tr>
   </table>
 
   <h3 style="margin-top:20px;color:#333">二、识别逻辑</h3>
@@ -138,17 +138,17 @@ a{color:#4a90d9;text-decoration:none}
   <p style="background:#f6ffed;padding:8px;border-radius:4px;border-left:3px solid #52c41a">
     直接从 PDF 文本层提取 <b>文字 + 字体 + 字号 + 颜色</b>，保留原始格式。<br>
     <b>表格</b>：用 PyMuPDF 内置的线条/文字间隙检测自动发现。<br>
-    <b>速度</b>：每秒 20-50 页，无 GPU 需求。
+    <b>速度</b>：每秒 ~2 页（PyMuPDF 文本层提取），无 GPU 需求。
   </p>
 
   <h4 style="margin-top:12px">2. 扫描件/图片（无文字层）</h4>
   <p style="background:#e6f7ff;padding:8px;border-radius:4px;border-left:3px solid #1890ff">
-    先渲染为 250 DPI 图像 → <b>PaddleOCR</b> 逐行识别文字 → <b>图像线检测</b> 找表格边框 → <b>逐网格 OCR</b> 填单元格。<br>
+    先渲染为 200 DPI 图像 → <b>PaddleOCR</b> 逐行识别文字 → <b>YOLO ONNX</b> 表检测 → <b>RapidOCR</b> 填单元格。<br>
     <b>表格</b>：通过横向/纵向投影找到网格线位置，重建行列结构。<br>
-    <b>速度</b>：纯 CPU 首次约 5-10 分钟（ONEDNN 编译），后续每页 10-30 秒。
+    <b>速度</b>：纯 CPU 首次 PDX 编译 5-10 分钟（环境重置后），后续每页 60-120 秒（含表检测）。PIR=Disabled 保证跨作业稳定。
   </p>
 
-  <h4 style="margin-top:12px">3. 印章识别</h4>
+  <h4 style="margin-top:12px">3. 印章识别（实验性）</h4>
   <p style="background:#fff7e6;padding:8px;border-radius:4px;border-left:3px solid #faad14">
     基于 HSV 颜色空间（红/蓝印章）+ 椭圆拟合 + 纹理密度检测。仅对彩色扫描件有效，灰度件自动跳过。<br>
     检出的印章独立裁剪为 PNG 嵌入 Word 文档。
@@ -159,9 +159,9 @@ a{color:#4a90d9;text-decoration:none}
   <table style="margin:8px 0;width:100%">
     <tr><th style="text-align:left;min-width:120px">参数</th><th style="text-align:left;min-width:80px">默认值</th><th style="text-align:left">说明与例子</th></tr>
     <tr>
-      <td><b>DPI</b></td><td>250</td>
+      <td><b>DPI</b></td><td>200</td>
       <td>扫描件渲染精度。数值越高图像越清晰、表格线检测越准，但处理更慢。<br>
-      <i>例：150=快速预览 / 250=标准文档（推荐） / 400=精细表格公式</i></td>
+      <i>例：150=快速预览 / 200=标准文档（推荐） / 400=精细表格公式</i></td>
     </tr>
     <tr>
       <td><b>OCR 语言</b></td><td>ch</td>
@@ -490,7 +490,7 @@ async function loadAdminSettings(){
   document.getElementById('adminMaxRuntime').value=data.max_runtime_minutes||15;
   const mem=data.memory_mb||{};
   document.getElementById('adminMemEstimate').innerHTML=
-    `预估内存：单任务 ~${(mem.per_task_mb/1024).toFixed(1)}GB × ${data.max_concurrent}并发 ≈ ${(mem.peak_total_mb/1024).toFixed(1)}GB峰值 &nbsp; CPU核心: ${data.cpu_cores}`;
+    `预估内存：单任务 ~${(mem.per_task_mb/1024).toFixed(1)}GB（ONEDNN 退火后释放），峰值 ~${(mem.peak_total_mb/1024).toFixed(1)}GB值 &nbsp; CPU核心: ${data.cpu_cores}`;
 }
 
 async function saveAdminSettings(){
