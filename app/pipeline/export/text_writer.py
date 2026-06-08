@@ -16,6 +16,8 @@ def write_text(doc: DocumentLayout, output_path: str):
     # 1. 段落
     for page in doc.pages:
         for idx in page.reading_order or range(len(page.elements)):
+            if idx >= len(page.elements):
+                continue
             elem = page.elements[idx]
             if elem.type == ElementType.PARAGRAPH and elem.content:
                 parts = []
