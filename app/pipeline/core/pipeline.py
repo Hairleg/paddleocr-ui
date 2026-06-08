@@ -117,16 +117,15 @@ def process_pdf(
         # on scanned documents and the HSV filter can destroy table grid lines.
         # Watermark removal is intended for electronic PDFs with light gray
         # overlaid text, not for scanned images.
-        # (Uncomment below if needed for specific document types)
+        # Watermark removal: DISABLED for scanned pages.
+        # Enabling it can destroy text regions (false positives).
+        # To re-enable, uncomment the block below.
         # try:
         #     if has_watermark(img):
-        #
-            img = remove_watermark(img)
-        #
-            cv2.imwrite(image_path, img)
+        #         img = remove_watermark(img)
+        #         cv2.imwrite(image_path, img)
         # except Exception:
         #     pass
-        pass
 
         # ── Red header enhancement (for Chinese government documents) ──
         try:

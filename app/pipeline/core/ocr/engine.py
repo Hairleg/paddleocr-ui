@@ -16,6 +16,7 @@ Maintains a singleton pattern so the model is loaded once and reused
 across all pages in a batch.
 """
 
+import gc
 import logging
 import os
 from typing import Optional
