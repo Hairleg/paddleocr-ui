@@ -45,7 +45,7 @@ def create_archive(
     """
     stem = Path(source_filename).stem
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    zip_name = f"{stem}_{ts}.zip"
+    zip_name = f"{stem}_ocr_{ts}.zip"
     docx_arc = f"{stem}_ocr_{ts}.docx"
     xlsx_arc = f"{stem}_ocr_{ts}.xlsx"
     zip_path = os.path.join(output_dir, zip_name)

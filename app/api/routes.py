@@ -367,14 +367,14 @@ async def api_download_job(
         if not job:
             raise HTTPException(status_code=404, detail="Job not found.")
 
-        # Find ZIP recursively in output directory
+        # Find output file: ZIP > DOCX > TXT
         out_dir = OUTPUT_DIR / job_id
         if out_dir.exists():
             for root, dirs, files in os.walk(str(out_dir)):
                 for f in files:
                     if f.endswith(".zip"):
-                        full_path = os.path.join(root, f)
-                        return FileResponse(full_path, filename=f)
+                        return FileResponse(os.path.join(root, f), filename=f)
+
 
         raise HTTPException(status_code=404, detail="Output not yet available.")
     finally:

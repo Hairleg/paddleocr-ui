@@ -52,14 +52,18 @@ FONT_FALLBACK_MAP = {
 
 
 def _merge_adjacent_paragraphs(elements):
-    """Merge adjacent text elements with similar font sizes into flowing paragraphs."""
-    import copy
+    """Merge adjacent text elements with similar font sizes into flowing paragraphs.
+    
+    保守策略 (docx):
+    - 字号差异 > 1.5pt → 不合并
+    - 垂直间距 > 2×字号 → 不合并 (跨行/跨区域)
+    """
     if len(elements) < 2:
         return
     merged = []
     prev = None
     for elem in elements:
-        if elem.type != ElementType.PARAGRAPH or elem.type != getattr(prev, 'type', None):  # Only merge PARAGRAPH
+        if elem.type != ElementType.PARAGRAPH or elem.type != getattr(prev, 'type', None):
             merged.append(elem)
             prev = elem
             continue
@@ -71,22 +75,31 @@ def _merge_adjacent_paragraphs(elements):
             merged.append(elem)
             prev = elem
             continue
-        
-        # Compare font sizes — merge if similar (< 4pt difference)
+
+        # Font size check (1.5pt tolerance for docx)
         prev_size = prev.content[-1].font_size if prev.content else 12
         cur_size = elem.content[0].font_size if elem.content else 12
-        if abs(prev_size - cur_size) < 4:
-            # Merge: append current content to previous
-            prev.content.extend(elem.content)
-            # Update bbox to encompass both
-            px, py, pw, ph = prev.bbox
-            ex, ey, ew, eh = elem.bbox
-            prev.bbox = (min(px, ex), min(py, ey), max(px+pw, ex+ew)-min(px, ex), max(py+ph, ey+eh)-min(py, ey))
-        else:
+        if abs(prev_size - cur_size) >= 1.5:
             merged.append(elem)
             prev = elem
-    elements[:] = merged
+            continue
 
+        # Position check: vertical gap must be reasonable
+        px1, py1, pw1, ph1 = prev.bbox
+        px2, py2, pw2, ph2 = elem.bbox
+        line_height = max(ph1, prev_size * 1.5)
+        vert_gap = abs(py2 - py1)
+        if vert_gap > line_height * 2:
+            merged.append(elem)
+            prev = elem
+            continue
+
+        # Merge
+        prev.content.extend(elem.content)
+        prev.bbox = (min(px1, px2), min(py1, py2),
+                     max(px1+pw1, px2+pw2)-min(px1, px2),
+                     max(py1+ph1, py2+ph2)-min(py1, py2))
+    elements[:] = merged
 def write_word(doc_layout: DocumentLayout, output_path: str) -> str:
     """
     Write DocumentLayout to a .docx file.

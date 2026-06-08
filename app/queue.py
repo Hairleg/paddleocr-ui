@@ -31,11 +31,22 @@ async def enqueue_job(job_id: str, file_record: dict = None):
     if file_record is None:
         import glob as _gm
         # 从上传目录找到文件
-        # 搜有扩展名和无扩展名两种情况
         uploads = _gm.glob("app/uploads/{}.*".format(job_id))
         if not uploads:
-            # 无扩展名（precheck可能没写.pdf后缀）
             uploads = _gm.glob("app/uploads/{}".format(job_id))
+        # 从DB查原始文件名
+        from app.db import get_db as _gdb
+        _db = await _gdb()
+        orig_name = ""
+        try:
+            row = await _db.execute("SELECT source_filename FROM jobs WHERE id=?", (job_id,))
+            jr = await row.fetchone()
+            if jr:
+                orig_name = jr[0] or ""
+        except Exception:
+            pass
+        finally:
+            await _db.close()
         if uploads:
             fpath = uploads[0]
             ext = fpath.rsplit(".", 1)[-1] if "." in fpath else ""
@@ -43,10 +54,11 @@ async def enqueue_job(job_id: str, file_record: dict = None):
                 "id": job_id,
                 "file_path": fpath,
                 "file_type": ext,
-                "kind": "pdf" if ext.lower() == "pdf" else "image"
+                "kind": "pdf" if ext.lower() == "pdf" else "image",
+                "source_filename": orig_name or fpath
             }
         else:
-            file_record = {"id": job_id, "kind": "pdf", "path": ""}
+            file_record = {"id": job_id, "kind": "pdf", "path": "", "source_filename": orig_name or ""}
     await _job_queue.put((job_id, file_record))
     logger.info("Job %s enqueued (queue size ~%d)", job_id, _job_queue.qsize())
 
@@ -135,10 +147,14 @@ async def process_job(job_id: str, file_record: dict):
         try:
             from app.pipeline.export.text_writer import write_text
             write_text(doc_layout, os.path.join(out_dir, "output.txt"))
-            zip_path = create_archive(doc_layout, out_dir, job_id[:8], f.get("file_path", ""))
+            source_name = f.get("source_filename") or f.get("file_path", "") or f"{job_id[:8]}.pdf"
+            zip_path = create_archive(doc_layout, out_dir, job_id[:8], source_name)
         except Exception as exc:
             logger.warning("Archive/text failed: %s", exc)
 
+        await _safe_db_op(db,
+            "UPDATE jobs SET status='completed', error_message=NULL WHERE id=?",
+            (job_id,))
         await _safe_db_op(db,
             "UPDATE job_files SET status='completed', output_zip=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
             (zip_path, file_id))
@@ -146,6 +162,7 @@ async def process_job(job_id: str, file_record: dict):
     except Exception as exc:
         logger.error("Job %s failed", job_id, exc_info=True)
         try:
+            await _safe_db_op(db, "UPDATE jobs SET status='failed', error_message='processing error' WHERE id=?", (job_id,))
             await _safe_db_op(db, "UPDATE job_files SET status='failed', updated_at=CURRENT_TIMESTAMP WHERE id=?", (file_id,))
         except:
             pass
