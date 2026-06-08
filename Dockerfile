@@ -1,4 +1,4 @@
-# Author: sizhchan | Org: dgaudit | Version: v0.1.2 | Date: 2026-06-01
+# Author: sizhchan | Org: dgaudit | Version: v0.2.0 | Date: 2026-06-08
 FROM python:3.11-slim
 
 WORKDIR /app

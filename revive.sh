@@ -1,8 +1,8 @@
 #!/bin/bash
 # Author: sizhchan
 # Org: dgaudit
-# Version: v0.1.2
-# Date: 2026-06-01
+# Version: v0.2.0
+# Date: 2026-06-08
 #
 # PaddleOCR UI 一键复活脚本
 # 用法: bash revive.sh
@@ -14,7 +14,7 @@ PROJECT=/mnt/workspace/project/paddleocr-ui
 SP=/usr/local/lib/python3.11/site-packages
 
 echo "╔══════════════════════════════════════════╗"
-echo "║   PaddleOCR UI v0.1.2 — 环境恢复脚本    ║"
+echo "║   PaddleOCR UI v0.2.0 — 环境恢复脚本    ║"
 echo "╚══════════════════════════════════════════╝"
 
 # ── 1. 加载环境变量 ──
