@@ -265,8 +265,8 @@ def process_pdf(
     # 避免 ONEDNN 线程池清理时 SIGSEGV 丢结果
     try:
         import pickle as _pkl
-        os.makedirs(out_dir, exist_ok=True)
-        pkl_path = os.path.join(out_dir, "doc_layout.pkl")
+        os.makedirs(output_dir, exist_ok=True)
+        pkl_path = os.path.join(output_dir, "doc_layout.pkl")
         with open(pkl_path, "wb") as _f:
             _pkl.dump(doc_layout, _f)
         logger.info("DocLayout saved: %s", pkl_path)
@@ -275,7 +275,7 @@ def process_pdf(
 
     try:
         from app.pipeline.export.word_writer import write_word
-        docx_path = os.path.join(out_dir, "output.docx")
+        docx_path = os.path.join(output_dir, "output.docx")
         write_word(doc_layout, docx_path)
         logger.info("Word document written: %s", docx_path)
     except Exception:
@@ -283,7 +283,7 @@ def process_pdf(
 
     try:
         from app.pipeline.export.excel_writer import write_excel
-        xlsx_path = os.path.join(out_dir, "tables.xlsx")
+        xlsx_path = os.path.join(output_dir, "tables.xlsx")
         write_excel(doc_layout.tables, xlsx_path)
         logger.info("Excel written: %s", xlsx_path)
     except Exception:

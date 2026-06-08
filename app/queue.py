@@ -111,7 +111,7 @@ async def process_job(job_id: str, file_record: dict):
         try:
             from app.pipeline.export.text_writer import write_text
             write_text(doc_layout, os.path.join(out_dir, "output.txt"))
-            zip_path = create_archive(doc_layout, out_dir, job_id[:8], f["path"])
+            zip_path = create_archive(doc_layout, out_dir, job_id[:8], f.get("file_path", ""))
         except Exception as exc:
             logger.warning("Archive/text failed: %s", exc)
 
