@@ -239,7 +239,7 @@ a{color:#4a90d9;text-decoration:none}
     </div>
     <div>
       <label style="font-size:12px;color:#666">任务超时 (分钟)</label>
-      <input id="adminMaxRuntime" type="number" min="1" max="120" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
+      <input id="adminMaxRuntime" type="number" min="1" max="180" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
       <span style="font-size:10px;color:#999">超过将自动停止并报错</span>
     </div>
   </div>
@@ -343,6 +343,7 @@ async function uploadFile(file){
   document.getElementById('uploadStatus').textContent='预检完成';
   document.getElementById('uploadStatus').style.color='#389e0d';
   showPrecheck(data);
+  if(data.estimated_minutes){document.getElementById('uploadStatus').textContent+=' | 预计 '+data.estimated_minutes+'分钟';}
 }
 
 function showPrecheck(data){

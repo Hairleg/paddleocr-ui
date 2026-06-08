@@ -248,7 +248,11 @@ async def api_precheck(
     finally:
         await db.close()
 
-    return {"job_id": job_id, "precheck": precheck}
+    page_count = precheck.get("total_ok", 0) or sum(f.get("page_count", 0) for f in precheck.get("ok_files", []))
+    table_mode = parsed_settings.get("table", False)
+    est_min = page_count * 2.0 * (1.5 if table_mode else 1.0)
+    est_min = max(5, int(est_min))
+    return {"job_id": job_id, "precheck": precheck, "estimated_minutes": est_min}
 
 
 @router.post("/api/jobs/{job_id}/confirm")

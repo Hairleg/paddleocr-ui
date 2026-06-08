@@ -331,3 +331,38 @@ PDX 编译 7-10 分钟 + 16 页 OCR 110 秒/页 ≈ 29 分钟 > 15 分钟。
 
 ### 教训
 子进程隔离后，超时掩盖了真实崩溃点。以后调试应先查 `asyncio.TimeoutError`。
+
+
+---
+
+## 17. PIR 解释器 SIGSEGV——跨作业崩溃 (✅ 已修复)
+
+### 现象
+PIR=Enabled 时首次 OCR 正常，第二次作业 PDX 重编译 → 管道中途 `exit code -11` (SIGSEGV) → uvicorn 致死。
+
+### 根因
+PaddlePaddle 3.0.0 PIR (Paddle Intermediate Representation) 解释器在跨作业重编译 ONEDNN kernel 时访问野指针，触发段错误。
+
+### 解决方案
+环境变量 `FLAGS_enable_pir_api=False` 禁用 PIR 解释器，回到旧执行器。OCR 质量无下降（96-113% vs 商业参考）。
+
+### 教训
+PIR 是 3.0.0 的新特性，稳定性不足。跨作业稳定性测试必须跑 ≥3 次连续作业。
+
+---
+
+## 18. writer `reading_order` 空列表→大文档死循环 (✅ 已修复)
+
+### 现象
+62 页文档在最后一页 OCR 后 CPU 778%（66 个 pt_main_thread 全速 spin），30 分钟无日志，进程不崩但不产出。
+
+### 根因
+`word_writer.py` 中 `_merge_adjacent_paragraphs` 对大文档的 `reading_order=[]` 进行全排列扫描，时间复杂度 O(n²)，62 页 × 每页 ~15 元素 = 930 元素，排序需遍历 930²/2 ≈ 430K 次比较。加上字号聚类，进入无界循环。
+
+### 解决方案
+- `writing_order.py` 对空列表不抛异常直接跳过
+- `_merge_adjacent_paragraphs` 加最大迭代上限
+- T-028: `OMP_WAIT_POLICY=passive` 避免 ONEDNN spin-wait
+
+### 教训
+writer 的 `reading_order` 和 `merge` 是 O(n²) 操作。大文档必须添加迭代上限 `max_iter`，防止无界循环。
