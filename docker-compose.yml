@@ -18,6 +18,8 @@ services:
       - PADDLE_PDX_MODEL_SOURCE=modelscope
       - PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
       - PYTHONUNBUFFERED=1
+      - FLAGS_enable_pir_api=False
+      - OMP_WAIT_POLICY=passive
     volumes:
       # SQLite 数据库持久化（用户、任务记录）
       - ./data/db:/app/app/data

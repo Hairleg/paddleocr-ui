@@ -4,13 +4,11 @@ __pycache__/
 *.db
 app/data/
 app/uploads/
-output/
-example/
-/tmp/
+_archive/
 *.log
 .venv/
 env/
 *.egg-info/
 .ipynb_checkpoints/
-build/dockerimage/output/
-_archive/
+build/
+ocr
