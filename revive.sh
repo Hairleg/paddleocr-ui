@@ -147,6 +147,7 @@ sleep 1
 export PADDLE_PDX_MODEL_SOURCE=modelscope
 export PADDLE_PDX_DISABLE_MODEL_SOURCE_CHECK=True
 export FLAGS_enable_pir_api=False
+export OMP_WAIT_POLICY=passive  # ONEDNN线程空闲时sleep
 # 线程由 engine.py 动态检测（CPU核心数/内存自动计算）
 
 nohup python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 \

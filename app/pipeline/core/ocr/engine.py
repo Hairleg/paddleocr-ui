@@ -94,6 +94,7 @@ def get_ocr(lang: str = "ch") -> "PaddleOCR":
         logger.info("PaddleOCR initialized (PDX preserved)")
         logger.info("PaddleOCR engine ready")
 
+    gc.collect()  # T-028: 释放ONEDNN线程
     return _ocr_instance
 
 

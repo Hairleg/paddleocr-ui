@@ -339,7 +339,7 @@ async function uploadFile(file){
   fd.append('settings',JSON.stringify(settings));
   const resp=await fetch('/api/jobs/precheck',{method:'POST',headers:{'Authorization':'Bearer '+token},body:fd});
   const data=await resp.json();
-  if(!resp.ok){document.getElementById('uploadStatus').textContent=data.error||'上传失败';document.getElementById('uploadStatus').style.color='#cf1322';return;}
+  if(!resp.ok){const errMsg=data.detail||data.error||resp.status+' 上传失败';document.getElementById('uploadStatus').textContent=errMsg;document.getElementById('uploadStatus').style.color='#cf1322';return;}
   document.getElementById('uploadStatus').textContent='预检完成';
   document.getElementById('uploadStatus').style.color='#389e0d';
   showPrecheck(data);
@@ -384,9 +384,17 @@ function showProgress(jobId){
     const resp=await fetch(`/api/jobs/${jobId}`,{headers:{'Authorization':'Bearer '+token}});
     const data=await resp.json();
     const j=data.job;
-    let s=`状态: ${j.status}`;
+    const pname={'precheck':'待确认','queued':'排队中','processing':'正在处理','completed':'完成','failed':'异常，请联系管理员','terminated':'终止'}[j.status]||j.status;
+    let s=`状态: ${pname}`;
     if(j.file_count)s+=` | 文件: ${j.completed_files}/${j.file_count}`;
-    area.innerHTML=`<div class="progress-info">${s}</div>`;
+    const pc=j.created_at?new Date(j.created_at+'Z'):null;
+    let timeInfo='';
+    if(pc){
+      const now2=new Date();
+      if(j.status==='queued') timeInfo=` | 已等候 ${Math.round((now2-pc)/60000)}分钟`;
+      else if(j.status==='processing') timeInfo=` | 已处理 ${Math.round((now2-pc)/60000)}分钟`;
+    }
+    area.innerHTML=`<div class="progress-info">${s}${timeInfo}</div>`;
     if(j.status==='completed'){area.innerHTML+=`<p><a href="/api/jobs/${jobId}/download?token=${token}">下载结果</a></p>`;clearInterval(iv);}
     if(j.status==='failed'){area.innerHTML+=`<p style="color:#cf1322">失败: ${j.error_message||'未知'}</p>`;clearInterval(iv);}
   },3000);
@@ -401,8 +409,20 @@ async function loadJobs(){
   let h='<table><tr><th>文件名</th><th>状态</th><th>进度</th><th>时间</th><th>操作</th></tr>';
   data.jobs.forEach(j=>{
     const statusClass='status-'+j.status;
-    const statusName={'precheck':'待确认','queued':'排队中','processing':'处理中','completed':'已完成','failed':'失败'}[j.status]||j.status;
-    const time=new Date(j.created_at+'Z').toLocaleString('zh-CN');
+    const statusName={'precheck':'待确认','queued':'排队中','processing':'正在处理','completed':'完成','failed':'异常，请联系管理员','terminated':'终止'}[j.status]||j.status;
+    const created=new Date(j.created_at+'Z');
+    const updated=j.updated_at?new Date(j.updated_at+'Z'):new Date();
+    const now=new Date();
+    let time;
+    if(j.status==='queued'){
+      const waitMin=Math.round((now-created)/60000);
+      time=`已等候 ${waitMin>=60?Math.floor(waitMin/60)+'时':''}${waitMin%60}分`;
+    }else if(j.status==='processing'){
+      const procMin=Math.round((now-created)/60000);
+      time=`已处理 ${procMin>=60?Math.floor(procMin/60)+'时':''}${procMin%60}分`;
+    }else{
+      time=updated.toLocaleString('zh-CN');
+    }
     const progress=j.file_count?`${j.completed_files||0}/${j.file_count}`:'-';
     const dl=j.status==='completed'?`<a href="/api/jobs/${j.id}/download?token=${token}">下载</a>`:'';
     const del=`<a href="#" onclick="deleteJob('${j.id}')" style="color:#cf1322;margin-left:8px">删除</a>`;

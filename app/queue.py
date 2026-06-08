@@ -64,6 +64,17 @@ async def process_job(job_id: str, file_record: dict):
         out_dir = os.path.join("app/data/outputs", job_id)
         os.makedirs(out_dir, exist_ok=True)
 
+        # 更新状态为 processing
+        import asyncio
+        try:
+            await asyncio.wait_for(
+                db.execute("UPDATE jobs SET status='processing' WHERE id=?", (job_id,)),
+                timeout=5
+            )
+            await asyncio.wait_for(db.commit(), timeout=5)
+        except Exception:
+            pass
+
         if f.get("kind") or f.get("file_type", "") == "pdf":
             import glob as gmod
             pdf_files = gmod.glob("app/uploads/{}.*".format(job_id))
@@ -89,6 +100,11 @@ async def process_job(job_id: str, file_record: dict):
                     timeout=timeout_sec,
                 )
             except asyncio.TimeoutError:
+                logger.warning("Job %s: OCR 超时 (limit=%ds)", job_id[:8], timeout_sec)
+                try:
+                    await _safe_db_op(db, "UPDATE job_files SET status='failed', error_message='timeout' WHERE id=?", (file_id,))
+                except Exception:
+                    pass
                 raise TimeoutError("over time limit")
 
             # 保存 pkl 用于独立调试
@@ -100,7 +116,15 @@ async def process_job(job_id: str, file_record: dict):
             if not os.path.exists(img_path):
                 raise FileNotFoundError("Image not found")
             from app.pipeline.core.pipeline import process_image
-            doc_layout = process_image(img_path, out_dir)
+            from functools import partial
+            _runner = partial(process_image, img_path, out_dir)
+            try:
+                doc_layout = await asyncio.wait_for(
+                    asyncio.get_event_loop().run_in_executor(None, _runner),
+                    timeout=timeout_sec,
+                )
+            except asyncio.TimeoutError:
+                raise TimeoutError("over time limit")
 
         docx_path = os.path.join(out_dir, "output.docx")
         write_word(doc_layout, docx_path)
@@ -115,22 +139,32 @@ async def process_job(job_id: str, file_record: dict):
         except Exception as exc:
             logger.warning("Archive/text failed: %s", exc)
 
-        await db.execute(
+        await _safe_db_op(db,
             "UPDATE job_files SET status='completed', output_zip=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
-            (zip_path, file_id),
-        )
-        await db.commit()
+            (zip_path, file_id))
         return True
     except Exception as exc:
         logger.error("Job %s failed", job_id, exc_info=True)
         try:
-            await db.execute("UPDATE job_files SET status='failed', updated_at=CURRENT_TIMESTAMP WHERE id=?", (file_id,))
-            await db.commit()
+            await _safe_db_op(db, "UPDATE job_files SET status='failed', updated_at=CURRENT_TIMESTAMP WHERE id=?", (file_id,))
         except:
             pass
         raise
     finally:
-        await db.close()
+        try:
+            await asyncio.wait_for(db.close(), timeout=5)
+        except Exception:
+            pass
+
+
+async def _safe_db_op(db, sql, params=(), timeout=30):
+    """带超时的DB操作，失败不抛异常"""
+    try:
+        await asyncio.wait_for(db.execute(sql, params), timeout=timeout)
+        await asyncio.wait_for(db.commit(), timeout=timeout)
+        return True
+    except Exception:
+        return False
 
 async def start_workers(n: int = 1):
     global _worker_count
@@ -160,7 +194,10 @@ async def requeue_stale_tasks():
     except Exception:
         pass
     finally:
-        await db.close()
+        try:
+            await asyncio.wait_for(db.close(), timeout=5)
+        except Exception:
+            pass
 
 async def worker():
     """主 worker 入口，启动 1 个后台 worker"""
