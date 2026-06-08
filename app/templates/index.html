@@ -233,10 +233,7 @@ a{color:#4a90d9;text-decoration:none}
       <label style="font-size:12px;color:#666">CPU线程数 (每任务)</label>
       <input id="adminCpuThreads" type="number" min="1" max="32" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
     </div>
-    <div>
-      <label style="font-size:12px;color:#666">最大并发任务数</label>
-      <input id="adminMaxConcurrent" type="number" min="1" max="8" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
-    </div>
+    
     <div>
       <label style="font-size:12px;color:#666">任务超时 (分钟)</label>
       <input id="adminMaxRuntime" type="number" min="1" max="180" style="width:100%;padding:6px;border:1px solid #ddd;border-radius:6px">
@@ -486,8 +483,7 @@ async function loadAdminSettings(){
   if(!resp.ok)return;
   const data=await resp.json();
   document.getElementById('adminCpuThreads').value=data.cpu_threads||8;
-  document.getElementById('adminMaxConcurrent').value=1;
-  document.getElementById('adminMaxRuntime').value=data.max_runtime_minutes||15;
+    document.getElementById('adminMaxRuntime').value=data.max_runtime_minutes||15;
   const mem=data.memory_mb||{};
   document.getElementById('adminMemEstimate').innerHTML=
     `预估内存：单任务 ~${(mem.per_task_mb/1024).toFixed(1)}GB（ONEDNN 退火后释放），峰值 ~${(mem.peak_total_mb/1024).toFixed(1)}GB值 &nbsp; CPU核心: ${data.cpu_cores}`;
@@ -495,8 +491,7 @@ async function loadAdminSettings(){
 
 async function saveAdminSettings(){
   const cpu=parseInt(document.getElementById('adminCpuThreads').value)||8;
-  const conc=parseInt(document.getElementById('adminMaxConcurrent').value)||2;
-  const runtime=parseInt(document.getElementById('adminMaxRuntime').value)||15;
+    const runtime=parseInt(document.getElementById('adminMaxRuntime').value)||15;
   const msg=document.getElementById('adminSettingsMsg');
   msg.style.color='#888'; msg.textContent='保存中...';
   const resp=await fetch('/api/admin/settings',{
