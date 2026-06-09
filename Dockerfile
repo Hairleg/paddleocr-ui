@@ -54,6 +54,7 @@ ENV OMP_WAIT_POLICY=passive
 ENV ADMIN_USERNAME=admin
 ENV ADMIN_PASSWORD=admin123
 ENV PADDLEOCR_SECRET=paddleocr-prod-secret-change-me
+ENV MINERU_LAYOUT_MODEL=/root/.cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt
 
 # ── Healthcheck ──
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \

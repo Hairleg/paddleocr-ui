@@ -29,8 +29,18 @@ _yolo_failed = False  # Set to True if inference crashes (model incompatible)
 import os as _os
 MODEL_PATH = _os.environ.get(
     "MINERU_LAYOUT_MODEL",
-    "/mnt/workspace/tool/models/mineru/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt"
+    _os.path.join(_os.path.expanduser("~"), ".cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
+) ".cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
 )
+
+def _ensure_layout_model():
+    if not _os.path.exists(MODEL_PATH):
+        try:
+            from modelscope import snapshot_download
+            base_dir = snapshot_download('opendatalab/PDF-Extract-Kit', allow_patterns=['*/Layout/YOLO/*.pt'])
+            logger.info("YOLO layout model downloaded to: %s", base_dir)
+        except Exception as exc:
+            logger.warning("Cannot download YOLO layout model: %s", exc)
 
 # Class IDs from doclayout_yolo
 CLASS_TABLE = 5
@@ -49,6 +59,7 @@ def _set_yolo_failed():
 def get_layout_model():
     """Get or create the YOLO layout model (singleton)."""
     global _yolo_model
+    _ensure_layout_model()
     if _yolo_model is None:
         try:
             import torch
