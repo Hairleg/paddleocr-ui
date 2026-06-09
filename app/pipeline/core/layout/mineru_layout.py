@@ -30,7 +30,6 @@ import os as _os
 MODEL_PATH = _os.environ.get(
     "MINERU_LAYOUT_MODEL",
     _os.path.join(_os.path.expanduser("~"), ".cache/huggingface/hub/models--juliozhao--DocLayout-YOLO/snapshots/main/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
-) ".cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
 )
 
 def _ensure_layout_model():
@@ -61,6 +60,9 @@ def get_layout_model():
     global _yolo_model
     _ensure_layout_model()
     if _yolo_model is None:
+        if not _os.path.exists(MODEL_PATH):
+            logger.warning("YOLO layout model not found at %s, table detection limited", MODEL_PATH)
+            return None
         try:
             import torch
             _orig_load = torch.load

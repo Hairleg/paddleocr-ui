@@ -11,15 +11,15 @@ RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/source
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 # ── CPU-only PyTorch (before other deps to avoid CUDA torch) ──
-RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu \
-    torch torchvision
+RUN pip install --no-cache-dir torch torchvision
 
 # ── Python dependencies ──
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ── RapidTable / RapidOCR (model auto-download on first run) ──
+# ── RapidTable / RapidOCR + YOLO 模型预下载 ──
 RUN pip install --no-cache-dir rapid_table rapidocr rapidocr_onnxruntime doclayout-yolo 'numpy<2.0'
+RUN python3 -c "from huggingface_hub import hf_hub_download; p=hf_hub_download('juliozhao/DocLayout-YOLO', 'doclayout_yolo_docstructbench_imgsz1280_2501.pt'); print('YOLO:', p)"
 
 # ── Application code ──
 COPY app/ ./app/
