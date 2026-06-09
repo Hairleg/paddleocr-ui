@@ -96,11 +96,23 @@ async def process_job(job_id: str, file_record: dict):
             if not pdf_path or not os.path.exists(pdf_path):
                 raise FileNotFoundError("Uploaded file not found")
 
+            # 从DB读取用户设置的参数
+            import json as _json
+            _row = await db.execute("SELECT settings FROM jobs WHERE id=?", (job_id,))
+            _jr = await _row.fetchone()
+            _db_settings = {}
+            if _jr and _jr[0]:
+                try:
+                    _db_settings = _json.loads(_jr[0])
+                except Exception:
+                    pass
             job_settings = {
-                "lang": f.get("lang", "ch"),
-                "dpi": f.get("dpi", 200),
-                "enable_table": f.get("table", False),
-                "enable_table_merge": f.get("table_merge", False),
+                "lang": _db_settings.get("lang") or f.get("lang", "ch"),
+                "dpi": _db_settings.get("dpi") or f.get("dpi", 200),
+                "table": _db_settings.get("table", f.get("table", True)),
+                "table_strategy": _db_settings.get("table_strategy") or f.get("table_strategy", "auto"),
+                "table_merge": _db_settings.get("table_merge", f.get("table_merge", False)),
+                "stamp": _db_settings.get("stamp", f.get("stamp", True)),
             }
             from app.settings import get_max_runtime_minutes
             timeout_sec = get_max_runtime_minutes() * 60
