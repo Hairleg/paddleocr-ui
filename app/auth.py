@@ -2,18 +2,17 @@
 Author: sizhchan
 Org: dgaudit
 Version: v0.2.0
-Date: 2026-06-01
+Date: 2026-06-09
 """
 
 """Authentication module — password hashing and JWT tokens."""
 
 import os
 import logging
-from datetime import datetime, timedelta, timezone
 
+import bcrypt
 from jose import JWTError, jwt
-from passlib.context import CryptContext
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Query
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 logger = logging.getLogger(__name__)
@@ -23,21 +22,21 @@ SECRET_KEY = os.environ.get("PADDLEOCR_SECRET", "paddleocr-dev-secret-change-in-
 ALGORITHM = "HS256"
 TOKEN_EXPIRE_HOURS = 24
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-security_scheme = HTTPBearer(auto_error=False)  # Allow optional auth via query param
+security_scheme = HTTPBearer(auto_error=False)
 
 
 # ---- Password helpers ----
 def hash_password(password: str) -> str:
-    return pwd_context.hash(password[:72])
+    return bcrypt.hashpw(password.encode()[:72], bcrypt.gensalt()).decode()
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return pwd_context.verify(plain, hashed)
+    return bcrypt.checkpw(plain.encode(), hashed.encode())
 
 
 # ---- Token helpers ----
 def create_token(user_id: int, username: str, is_admin: bool = False) -> str:
+    from datetime import datetime, timedelta, timezone
     expire = datetime.now(timezone.utc) + timedelta(hours=TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": str(user_id),
@@ -59,19 +58,10 @@ def decode_token(token: str) -> dict:
 
 
 # ---- FastAPI dependency ----
-from fastapi import Query
-
 async def current_user(
     credentials: HTTPAuthorizationCredentials | None = Depends(security_scheme),
     token: str = Query(default=None),
 ) -> dict:
-    """
-    Extract and validate the current user from Bearer token.
-
-    Accepts token from Authorization header or ?token= query parameter.
-    At least one must be provided.
-    """
-    # Try query param first, then header
     token_value = token
     if not token_value and credentials:
         token_value = credentials.credentials
@@ -92,10 +82,7 @@ async def current_user(
     return {"id": int(user_id), "username": username, "is_admin": bool(is_admin)}
 
 
-async def admin_required(
-    user: dict = Depends(current_user),
-) -> dict:
-    """Only allow admin users."""
+async def admin_required(user: dict = Depends(current_user)) -> dict:
     if not user.get("is_admin"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

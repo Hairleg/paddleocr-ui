@@ -1,12 +1,13 @@
 # Author: sizhchan | Org: dgaudit | Version: v0.2.0 | Date: 2026-06-08
 FROM python:3.11-slim
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
 
 # ── System deps (OpenCV, PyMuPDF, fonts) ──
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
-    fonts-noto-cjk fonts-dejavu-core curl \
+    fonts-noto-cjk fonts-dejavu-core curl gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 
 # ── CPU-only PyTorch (before other deps to avoid CUDA torch) ──
@@ -58,4 +59,4 @@ ENV PADDLEOCR_SECRET=paddleocr-prod-secret-change-me
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -sf http://localhost:8000/health || exit 1
 
-CMD ["sh", "-c", "python3 -c \"from app.main import ensure_admin; import asyncio; asyncio.run(ensure_admin())\" && uvicorn app.main:app --host 0.0.0.0 --port 8000"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
