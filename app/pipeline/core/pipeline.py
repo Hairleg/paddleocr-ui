@@ -598,7 +598,73 @@ def _extract_electronic_page_with_tables(
 
 
 
-    # ── Step 2: Extract text blocks outside table regions ──    # ── Step 2: Extract text blocks outside table regions ──
+    # ── Step 1b: PyMuPDF find_tables() fallback (if YOLO found nothing) ──
+    if enable_table and not tables:
+        try:
+            pymu_tabs = page.find_tables(strategy="lines")
+            if pymu_tabs.tables:
+                for tab_idx, tab in enumerate(pymu_tabs.tables):
+                    cells = tab.extract()
+                    if not cells:
+                        continue
+                    rows = []
+                    for row_cells in cells:
+                        table_cells = []
+                        for ci, ct in enumerate(row_cells):
+                            table_cells.append(TableCell(row=len(rows), col=ci, text=(ct or "").strip()))
+                        if any(c.text for c in table_cells):
+                            rows.append(table_cells)
+                    if rows:
+                        td = TableData(
+                            rows=rows,
+                            title="",
+                            sheet_name=f"第{page_num}页_表格{tab_idx+1}"
+                        )
+                        tables.append(td)
+                        # 用bbox创建table元素
+                        x0, y0, x1, y1 = tab.bbox
+                        elem = PageElement(type=ElementType.TABLE, bbox=(x0, y0, x1-x0, y1-y0))
+                        elem._table_data = td
+                        elements.append(elem)
+                        table_bboxes.append((x0, y0, x1, y1))
+                logger.info("Page %d: PyMuPDF fallback detected %d tables", page_num, len(tables))
+        except Exception as exc:
+            logger.debug("PyMuPDF table fallback failed on page %d: %s", page_num, exc)
+
+    # ── Step 2: Extract text blocks outside table regions ──    # ── Step 1b: PyMuPDF find_tables() fallback (if YOLO found nothing) ──
+    if enable_table and not tables:
+        try:
+            pymu_tabs = page.find_tables(strategy="lines")
+            if pymu_tabs.tables:
+                for tab_idx, tab in enumerate(pymu_tabs.tables):
+                    cells = tab.extract()
+                    if not cells:
+                        continue
+                    rows = []
+                    for row_cells in cells:
+                        table_cells = []
+                        for ci, ct in enumerate(row_cells):
+                            table_cells.append(TableCell(row=len(rows), col=ci, text=(ct or "").strip()))
+                        if any(c.text for c in table_cells):
+                            rows.append(table_cells)
+                    if rows:
+                        td = TableData(
+                            rows=rows,
+                            title="",
+                            sheet_name=f"第{page_num}页_表格{tab_idx+1}"
+                        )
+                        tables.append(td)
+                        # 用bbox创建table元素
+                        x0, y0, x1, y1 = tab.bbox
+                        elem = PageElement(type=ElementType.TABLE, bbox=(x0, y0, x1-x0, y1-y0))
+                        elem._table_data = td
+                        elements.append(elem)
+                        table_bboxes.append((x0, y0, x1, y1))
+                logger.info("Page %d: PyMuPDF fallback detected %d tables", page_num, len(tables))
+        except Exception as exc:
+            logger.debug("PyMuPDF table fallback failed on page %d: %s", page_num, exc)
+
+    # ── Step 2: Extract text blocks outside table regions ──
     text_dict = page.get_text("dict")
     blocks = text_dict.get("blocks", [])
 
