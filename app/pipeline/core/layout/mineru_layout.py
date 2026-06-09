@@ -29,7 +29,7 @@ _yolo_failed = False  # Set to True if inference crashes (model incompatible)
 import os as _os
 MODEL_PATH = _os.environ.get(
     "MINERU_LAYOUT_MODEL",
-    _os.path.join(_os.path.expanduser("~"), ".cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
+    _os.path.join(_os.path.expanduser("~"), ".cache/huggingface/hub/models--juliozhao--DocLayout-YOLO/snapshots/main/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
 ) ".cache/modelscope/hub/models/opendatalab/PDF-Extract-Kit/main/Layout/YOLO/doclayout_yolo_docstructbench_imgsz1280_2501.pt")
 )
 
