@@ -12,3 +12,15 @@ env/
 .ipynb_checkpoints/
 build/
 ocr
+
+# 不上传其他md文件
+*.md
+!README.md
+
+# 不上传一键拉起脚本
+revive.sh
+
+# 不上传错误日志和示例
+errorlog/
+example/
+models/
