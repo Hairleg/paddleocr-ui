@@ -1,5 +1,7 @@
-# PaddleOCR UI — Portainer Stack v0.2.0
-# 使用前先: docker load -i paddleocr-ui-v0.2.0.tar
+# PaddleOCR UI v0.2.0 — Docker Compose 部署
+# 使用方法:
+#   1. docker load -i paddleocr-ui-v0.2.0.tar
+#   2. docker compose -f paddleocr-ui-compose.yml up -d
 services:
   paddleocr-ui:
     image: paddleocr-ui:v0.2.0
