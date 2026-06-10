@@ -24,3 +24,4 @@ revive.sh
 errorlog/
 example/
 models/
+pir_error_report.txt
