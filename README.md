@@ -1,4 +1,3 @@
-# Author: sizhchan | Org: dgaudit | Version: v0.1 | Date: 2026-05-27
 # PaddleOCR UI
 
 - 本项目主要是同事提出，敏感文件不敢使用商业ocr，故使用vibecoding编写了该项目，可以在内网离线运行。
