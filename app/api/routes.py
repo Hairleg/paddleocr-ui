@@ -286,11 +286,16 @@ async def api_confirm_job(job_id: str, user: dict = Depends(current_user)):
 
 @router.get("/api/jobs")
 async def api_list_jobs(user: dict = Depends(current_user)):
-    """List all jobs for current user, with queue position and global stats."""
+    """List jobs: admin sees all, regular user sees own only."""
     db = await get_db()
     try:
-        # Global stats
-        gc = await db.execute("SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status")
+        is_admin = bool(user.get("is_admin"))
+
+        # Stats — admin sees global, user sees own
+        if is_admin:
+            gc = await db.execute("SELECT status, COUNT(*) as cnt FROM jobs GROUP BY status")
+        else:
+            gc = await db.execute("SELECT status, COUNT(*) as cnt FROM jobs WHERE user_id=? GROUP BY status", (user["id"],))
         gr = await gc.fetchall()
         stats = {"total": 0, "queued": 0, "processing": 0, "completed": 0, "failed": 0}
         for r in gr:
@@ -299,18 +304,32 @@ async def api_list_jobs(user: dict = Depends(current_user)):
             stats["total"] += r["cnt"]
         processed = stats["completed"] + stats["failed"]
 
-        # Queue positions
-        qc = await db.execute("SELECT id FROM jobs WHERE status='queued' ORDER BY created_at")
+        # Queue positions (user-scoped if not admin)
+        if is_admin:
+            qc = await db.execute("SELECT id FROM jobs WHERE status='queued' ORDER BY created_at")
+        else:
+            qc = await db.execute("SELECT id FROM jobs WHERE status='queued' AND user_id=? ORDER BY created_at", (user["id"],))
         qr = await qc.fetchall()
         queue_map = {r["id"]: i + 1 for i, r in enumerate(qr)}
 
-        cursor = await db.execute(
-            """SELECT j.id, j.source_filename, j.status, j.error_message,
-                      j.created_at, j.updated_at,
-                      (SELECT COUNT(*) FROM job_files WHERE job_id=j.id) as file_count,
-                      (SELECT COUNT(*) FROM job_files WHERE job_id=j.id AND status='completed') as completed_files
-               FROM jobs j ORDER BY j.created_at DESC LIMIT 50""",
-        )
+        # Job list — admin sees all, user sees own
+        if is_admin:
+            cursor = await db.execute(
+                """SELECT j.id, j.source_filename, j.status, j.error_message,
+                          j.created_at, j.updated_at,
+                          (SELECT COUNT(*) FROM job_files WHERE job_id=j.id) as file_count,
+                          (SELECT COUNT(*) FROM job_files WHERE job_id=j.id AND status='completed') as completed_files
+                   FROM jobs j ORDER BY j.created_at DESC LIMIT 50""",
+            )
+        else:
+            cursor = await db.execute(
+                """SELECT j.id, j.source_filename, j.status, j.error_message,
+                          j.created_at, j.updated_at,
+                          (SELECT COUNT(*) FROM job_files WHERE job_id=j.id) as file_count,
+                          (SELECT COUNT(*) FROM job_files WHERE job_id=j.id AND status='completed') as completed_files
+                   FROM jobs j WHERE j.user_id=? ORDER BY j.created_at DESC LIMIT 50""",
+                (user["id"],),
+            )
         rows = await cursor.fetchall()
         jobs = []
         for r in rows:
