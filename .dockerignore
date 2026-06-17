@@ -1,0 +1,20 @@
+# Docker build 排除项
+*.md
+!README.md
+revive.sh
+example/
+errorlog/
+upload/
+models/
+*.db
+*.log
+_archive/
+build/
+.codewhale/
+.git/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/

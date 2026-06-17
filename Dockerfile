@@ -1,30 +1,32 @@
-# Author: sizhchan | Org: dgaudit | Version: v0.2.0 | Date: 2026-06-08
+# Author: sizhchan | Org: dgaudit | Version: v0.2.0 | Date: 2026-06-11
 FROM python:3.11-slim
 RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 WORKDIR /app
 
-# ── System deps (OpenCV, PyMuPDF, fonts) ──
+# ── System deps ──
 RUN sed -i 's|http://deb.debian.org|http://mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null; apt-get update && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libsm6 libxext6 libxrender1 libgomp1 \
     fonts-noto-cjk fonts-dejavu-core curl gcc libc6-dev \
     && rm -rf /var/lib/apt/lists/* && apt-get clean
 
-# ── CPU-only PyTorch (before other deps to avoid CUDA torch) ──
+# ── CPU-only PyTorch ──
 RUN pip install --no-cache-dir torch torchvision
 
 # ── Python dependencies ──
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ── RapidTable / RapidOCR + YOLO 模型预下载 ──
+# ── RapidTable / RapidOCR / YOLO（仅安装包，模型从 COPY 获取） ──
 RUN pip install --no-cache-dir rapid_table rapidocr rapidocr_onnxruntime doclayout-yolo 'numpy<2.0'
-RUN python3 -c "from huggingface_hub import hf_hub_download; p=hf_hub_download('juliozhao/DocLayout-YOLO', 'doclayout_yolo_docstructbench_imgsz1280_2501.pt'); print('YOLO:', p)"
 
 # ── Application code ──
 COPY app/ ./app/
 
-# ── Pre-warm PaddleOCR (compile ONEDNN kernels once) ──
+# ── YOLO 模型（离线） ──
+COPY models/ /app/models/
+
+# ── Pre-warm PaddleOCR ──
 RUN python3 -c "\
 import os; \
 os.environ['PADDLE_PDX_MODEL_SOURCE']='modelscope'; \
@@ -54,7 +56,7 @@ ENV OMP_WAIT_POLICY=passive
 ENV ADMIN_USERNAME=admin
 ENV ADMIN_PASSWORD=admin123
 ENV PADDLEOCR_SECRET=paddleocr-prod-secret-change-me
-ENV MINERU_LAYOUT_MODEL=/root/.cache/huggingface/hub/models--juliozhao--DocLayout-YOLO/snapshots/main/doclayout_yolo_docstructbench_imgsz1280_2501.pt
+ENV MINERU_LAYOUT_MODEL=/app/models/doclayout_yolo_docstructbench_imgsz1280_2501.pt
 
 # ── Healthcheck ──
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
